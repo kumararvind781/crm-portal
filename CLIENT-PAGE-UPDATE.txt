@@ -1,0 +1,18 @@
+CLIENT PAGE LATEST CHANGE
+
+1. Removed inline Add Client form from clients listing page.
+2. Expanded client list to full page width.
+3. Added top-right Add Client button.
+4. Added new separate page: modules/client_create.php.
+5. New client form fields added:
+   - Client First Name
+   - Client Last Name
+   - Company Name
+   - Email ID
+   - Mobile Number
+   - Location
+   - LinkedIn ID
+   - Photo
+   - Card Photo
+6. Edit action now opens the new client form page.
+7. Client delete also removes saved photo and card photo files.

@@ -1,0 +1,32 @@
+CRM VERSION 3 - WHAT CHANGED
+
+1. Clients module
+- Added edit client
+- Added delete client (admin/manager only)
+- Added CSV export
+
+2. Cards module
+- Added delete uploaded card
+- Deletes image file from uploads folder too
+
+3. Follow-ups module
+- Added edit follow-up
+- Added delete follow-up (admin/manager only)
+
+4. Users module
+- Added role-based protection
+- Only Super Admin / Manager can open users page
+- Added edit user
+- Added delete user
+- Prevented logged-in user from deleting own account from listing
+
+5. Permissions
+- Added basic role helper functions: is_admin() and require_admin()
+- Delete actions restricted for higher roles only
+
+6. Shared improvements
+- Kept BASE_URL based asset loading
+- Added update note file in project root
+
+Demo login:
+admin@crm.com / password
