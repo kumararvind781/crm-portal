@@ -1,0 +1,44 @@
+# These are some examples of commonly ignored file patterns.
+# You should customize this list as applicable to your project.
+# Learn more about .gitignore:
+#     https://www.atlassian.com/git/tutorials/saving-changes/gitignore
+
+# Database Connection
+config/db.php
+config/config.php
+
+# SQL Backup Files
+database.sql
+*.sql
+
+# Uploads
+uploads/
+assets/uploads/
+
+# Logs
+logs/
+*.log
+
+# Cache
+cache/
+
+# Backup Files
+backups/
+*.zip
+*.rar
+
+# Environment Files
+.env
+
+# VS Code
+.vscode/
+
+# PhpStorm
+.idea/
+
+# Windows
+Thumbs.db
+Desktop.ini
+
+# Mac
+.DS_Store

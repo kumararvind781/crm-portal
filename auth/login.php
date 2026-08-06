@@ -21,6 +21,108 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $error = 'Invalid email or password';
 }
 ?>
+
+<style>
+
+body.auth-body{
+    margin:0;
+    font-family:Inter,sans-serif;
+    background:#eef6f1;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    min-height:100vh;
+}
+
+.login-box{
+    width:460px;
+    background:#fff;
+    border-radius:22px;
+    padding:40px;
+    box-shadow:0 15px 45px rgba(0,0,0,.12);
+}
+
+.logo{
+    text-align:center;
+    margin-bottom:20px;
+}
+
+.logo img{
+    width:220px;
+}
+
+h1{
+    text-align:center;
+    margin:10px 0;
+    font-size:42px;
+    font-weight:800;
+    color:#1b2b34;
+}
+
+.subtitle{
+    text-align:center;
+    color:#666;
+    margin-bottom:30px;
+}
+
+.mb-3,
+.mb-4{
+    margin-bottom:20px;
+}
+
+label{
+    display:block;
+    font-weight:600;
+    margin-bottom:8px;
+}
+
+.form-control{
+    width:100%;
+    height:55px;
+    border:1px solid #d9d9d9;
+    border-radius:14px;
+    padding:0 18px;
+    font-size:16px;
+    box-sizing:border-box;
+}
+
+.form-control:focus{
+    outline:none;
+    border-color:#218c5a;
+}
+
+.btn-login{
+    width:100%;
+    height:56px;
+    border:none;
+    border-radius:14px;
+    background:#218c5a;
+    color:#fff;
+    font-size:18px;
+    font-weight:700;
+    cursor:pointer;
+}
+
+.btn-login:hover{
+    background:#1b754b;
+}
+
+.footer{
+    margin-top:25px;
+    text-align:center;
+    color:#666;
+    font-size:14px;
+}
+
+.alert.error{
+    background:#ffe9e9;
+    color:#b50000;
+    padding:12px;
+    border-radius:10px;
+    margin-bottom:20px;
+}
+
+</style>
 <!doctype html>
 <html lang="en">
 
@@ -35,16 +137,44 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 </head>
 
 <body class="auth-body">
-    <div class="login-card">
-        <h1>CRM Portal</h1>
-        <p>Login to manage clients, follow-ups and uploads.</p><?php if ($error): ?>
-            <div class="alert error"><?= esc($error) ?></div><?php endif; ?>
-        <form method="post" class="form-grid">
-            <input type="text" name="login" placeholder="Email or Username" required>
-            <div><label>Password</label><input type="password" name="password" value="password" required></div><button
-                type="submit" class="btn btn-primary full">Login</button>
-        </form><small>Demo: admin@crm.com / password</small>
+
+<div class="login-box">
+
+    <div class="logo">
+        <img src="<?= BASE_URL ?>uploads/Logo/Unire-Business-Solutions-Pvt-Ltd.png" alt="UNIRE">
     </div>
+
+    <h1>CRM Portal</h1>
+    <p class="subtitle">Login to manage clients, follow-ups and uploads.</p>
+
+    <?php if ($error): ?>
+        <div class="alert error"><?= esc($error) ?></div>
+    <?php endif; ?>
+
+    <form method="post">
+
+        <div class="mb-3">
+            <label>Email or Username</label>
+            <input type="text" name="login" class="form-control" required>
+        </div>
+
+        <div class="mb-4">
+            <label>Password</label>
+            <input type="password" name="password" class="form-control" required>
+        </div>
+
+        <button class="btn-login" type="submit">
+            Login
+        </button>
+
+    </form>
+
+    <div class="footer">
+        © <?= date('Y') ?> Unire Business Solutions Pvt. Ltd.
+    </div>
+
+</div>
+
 </body>
 
 </html>
