@@ -45,223 +45,215 @@ if ($search != '') {
 
 }
 
-include __DIR__.'/../includes/header.php';
-include __DIR__.'/../includes/sidebar.php';
+include __DIR__ . '/../includes/header.php';
+include __DIR__ . '/../includes/sidebar.php';
 ?>
 
 <main class="main-content">
 
-<?php include __DIR__.'/../includes/topbar.php'; ?>
+    <?php include __DIR__ . '/../includes/topbar.php'; ?>
 
-<section class="panel">
+    <section class="panel">
 
-<div class="panel-header">
+        <div class="panel-header">
 
-<div>
+            <div>
 
-<h2>Company Master</h2>
+                <h2>Company Master</h2>
 
-<p>Manage all companies in one place.</p>
+                <p>Manage all companies in one place.</p>
 
-</div>
+            </div>
 
-<div>
+            <div>
 
-<a href="<?= BASE_URL ?>modules/company_create.php"
-class="btn btn-primary">
+                <a href="<?= BASE_URL ?>modules/company_create.php" class="btn btn-primary">
 
-<i class="fa fa-plus"></i>
+                    <i class="fa fa-plus"></i>
 
-Add Company
+                    Add Company
 
-</a>
+                </a>
 
-</div>
+            </div>
 
-</div>
+        </div>
 
-<form method="GET" style="margin:25px 0;">
+        <form method="GET" style="margin:25px 0;">
 
-<div class="search-box">
+            <div class="search-box">
 
-<input
-type="text"
-name="search"
-value="<?= esc($search) ?>"
-placeholder="Search Company, City, Industry">
+                <input type="text" name="search" value="<?= esc($search) ?>"
+                    placeholder="Search Company, City, Industry">
 
-<button class="btn btn-primary">
+                <button class="btn btn-primary">
 
-<i class="fa fa-search"></i>
+                    <i class="fa fa-search"></i>
 
-Search
+                    Search
 
-</button>
+                </button>
 
-<?php if($search!=''): ?>
+                <?php if ($search != ''): ?>
 
-<a
-href="<?= BASE_URL ?>modules/company_list.php"
-class="btn btn-outline">
+                    <a href="<?= BASE_URL ?>modules/company_list.php" class="btn btn-outline">
 
-Reset
+                        Reset
 
-</a>
+                    </a>
 
-<?php endif; ?>
+                <?php endif; ?>
 
-</div>
+            </div>
 
-</form>
+        </form>
 
-<div class="table-responsive">
+        <div class="table-responsive">
 
-<table class="crm-table">
+            <table class="crm-table">
 
-<thead>
+                <thead>
 
-<tr>
+                    <tr>
 
-<th width="60">#</th>
+                        <th width="60">#</th>
 
-<th>Company</th>
+                        <th>Company</th>
 
-<th>City</th>
+                        <th>City</th>
 
-<th>Industry</th>
+                        <th>Industry</th>
 
-<th align="center">Contacts</th>
+                        <th align="center">Contacts</th>
 
-<th align="center">Meetings</th>
+                        <th align="center">Meetings</th>
 
-<th align="center">Pending</th>
+                        <th align="center">Pending</th>
 
-<th width="180">Action</th>
+                        <th width="180">Action</th>
 
-</tr>
+                    </tr>
 
-</thead>
+                </thead>
 
-<tbody>
+                <tbody>
 
-<?php if(count($companies)==0): ?>
+                    <?php if (count($companies) == 0): ?>
 
-<tr>
+                        <tr>
 
-<td colspan="8" align="center">
+                            <td colspan="8" align="center">
 
-No Company Found
+                                No Company Found
 
-</td>
+                            </td>
 
-</tr>
+                        </tr>
 
-<?php endif; ?>
+                    <?php endif; ?>
 
-<?php
+                    <?php
 
-$i=1;
+                    $i = 1;
 
-foreach($companies as $row):
+                    foreach ($companies as $row):
 
-?>
+                        ?>
 
-<tr>
+                        <tr>
 
-<td><?= $i++ ?></td>
+                            <td><?= $i++ ?></td>
 
-<td>
+                            <td>
 
-<strong>
+                                <strong>
 
-<?= esc($row['company_name']) ?>
+                                    <?= esc($row['company_name']) ?>
 
-</strong>
+                                </strong>
 
-<br>
+                                <br>
 
-<small>
+                                <small>
 
-<?= esc($row['website']) ?>
+                                    <?= esc($row['website']) ?>
 
-</small>
+                                </small>
 
-</td>
+                            </td>
 
-<td>
+                            <td>
 
-<?= esc($row['city']) ?>
+                                <?= esc($row['city']) ?>
 
-</td>
+                            </td>
 
-<td>
+                            <td>
 
-<?= esc($row['industry']) ?>
+                                <?= esc($row['industry']) ?>
 
-</td>
+                            </td>
 
-<td align="center">
+                            <td align="center">
 
-<span class="badge success">
+                                <span class="badge success">
 
-<?= $row['total_contacts'] ?>
+                                    <?= $row['total_contacts'] ?>
 
-</span>
+                                </span>
 
-</td>
+                            </td>
 
-<td align="center">
+                            <td align="center">
 
-<span class="badge info">
+                                <span class="badge info">
 
-<?= $row['total_meetings'] ?>
+                                    <?= $row['total_meetings'] ?>
 
-</span>
+                                </span>
 
-</td>
+                            </td>
 
-<td align="center">
+                            <td align="center">
 
-<span class="badge warning">
+                                <span class="badge warning">
 
-<?= $row['pending_followups'] ?>
+                                    <?= $row['pending_followups'] ?>
 
-</span>
+                                </span>
 
-</td>
+                            </td>
 
-<td>
+                            <td>
 
-<a
-class="btn btn-sm btn-outline"
-href="<?= BASE_URL ?>modules/company_view.php?id=<?= $row['id'] ?>">
+                                <a class="btn btn-sm btn-outline"
+                                    href="<?= BASE_URL ?>modules/company_view.php?id=<?= $row['id'] ?>">
 
-View
+                                    View
 
-</a>
+                                </a>
 
-<a
-class="btn btn-sm btn-primary"
-href="<?= BASE_URL ?>modules/company_edit.php?id=<?= $row['id'] ?>">
+                                <!-- <a class="btn btn-sm btn-primary"
+                                    href="<?= BASE_URL ?>modules/company_edit.php?id=<?= $row['id'] ?>">
 
-Edit
+                                    Edit
 
-</a>
+                                </a> -->
 
-</td>
+                            </td>
 
-</tr>
+                        </tr>
 
-<?php endforeach; ?>
+                    <?php endforeach; ?>
 
-</tbody>
+                </tbody>
 
-</table>
+            </table>
 
-</div>
+        </div>
 
-</section>
+    </section>
 
 </main>
 
-<?php include __DIR__.'/../includes/footer.php'; ?>
+<?php include __DIR__ . '/../includes/footer.php'; ?>

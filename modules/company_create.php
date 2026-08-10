@@ -9,307 +9,302 @@ include __DIR__ . '/../includes/header.php';
 include __DIR__ . '/../includes/sidebar.php';
 ?>
 
+<style>
+
+</style>
+
 <main class="main-content">
 
-<?php include __DIR__ . '/../includes/topbar.php'; ?>
+    <?php include __DIR__ . '/../includes/topbar.php'; ?>
 
-<section class="panel wide-form-panel">
+    <section class="panel wide-form-panel">
 
-    <div class="panel-header">
-        <div>
-            <h2>Add New Company</h2>
-            <p>Create a company before adding contact persons.</p>
+        <div class="panel-header">
+            <div>
+                <h2>Add New Company</h2>
+                <p>Create a company before adding contact persons.</p>
+            </div>
+
+            <a href="<?= BASE_URL ?>modules/company_list.php" class="btn btn-outline">
+                <i class="fa fa-arrow-left"></i>
+                Back
+            </a>
         </div>
 
-        <a href="<?= BASE_URL ?>modules/company_list.php"
-           class="btn btn-outline">
-            <i class="fa fa-arrow-left"></i>
-            Back
-        </a>
-    </div>
+        <form method="post" action="<?= BASE_URL ?>modules/company_save.php" class="form-grid company-form">
 
-<form
-method="post"
-action="<?= BASE_URL ?>modules/company_save.php"
-class="form-grid company-form">
+            <div class="section-title">
+                Company Information
+            </div>
 
-<div class="section-title">
-    Company Information
-</div>
+            <div>
+                <label>Company Name *</label>
+                <input type="text" name="company_name" required>
+            </div>
 
-<div>
-<label>Company Name *</label>
-<input
-type="text"
-name="company_name"
-required>
-</div>
+            <div>
+                <label>Industry</label>
 
-<div>
-<label>Industry</label>
+                <select name="industry">
 
-<select name="industry">
+                    <option value="">Select</option>
 
-<option value="">Select</option>
+                    <option>IT</option>
 
-<option>IT</option>
+                    <option>Manufacturing</option>
 
-<option>Manufacturing</option>
+                    <option>Education</option>
 
-<option>Education</option>
+                    <option>Healthcare</option>
 
-<option>Healthcare</option>
+                    <option>Finance</option>
 
-<option>Finance</option>
+                    <option>Retail</option>
 
-<option>Retail</option>
+                    <option>Government</option>
 
-<option>Government</option>
+                    <option>Pharma</option>
 
-<option>Pharma</option>
+                    <option>Real Estate</option>
 
-<option>Real Estate</option>
+                    <option>Other</option>
 
-<option>Other</option>
+                </select>
 
-</select>
+            </div>
 
-</div>
+            <div class="full">
 
-<div class="full">
+                <label>Company Address</label>
 
-<label>Company Address</label>
+                <textarea name="address" rows="3"></textarea>
 
-<textarea
-name="address"
-rows="3"></textarea>
+            </div>
 
-</div>
+            <div>
 
-<div>
+                <label>City</label>
 
-<label>City</label>
+                <input type="text" name="city">
 
-<input
-type="text"
-name="city">
+            </div>
 
-</div>
+            <div>
 
-<div>
+                <label>State</label>
 
-<label>State</label>
+                <input type="text" name="state">
 
-<input
-type="text"
-name="state">
+            </div>
 
-</div>
+            <div>
 
-<div>
+                <label>Country</label>
 
-<label>Country</label>
+                <input type="text" name="country" value="India">
 
-<input
-type="text"
-name="country"
-value="India">
+            </div>
 
-</div>
+            <div>
 
-<div>
+                <label>Pincode</label>
 
-<label>Pincode</label>
+                <input type="text" name="pincode">
 
-<input
-type="text"
-name="pincode">
+            </div>
 
-</div>
+            <hr class="full">
 
-<hr class="full">
+            <div class="section-title full">
 
-<div class="section-title full">
+                Business Information
 
-Business Information
+            </div>
 
-</div>
+            <div>
 
-<div>
+                <label>Website</label>
 
-<label>Website</label>
+                <input type="url" name="website" placeholder="https://">
 
-<input
-type="url"
-name="website"
-placeholder="https://">
+            </div>
 
-</div>
+            <div>
 
-<div>
+                <label>LinkedIn</label>
 
-<label>LinkedIn</label>
+                <input type="url" name="linkedin">
 
-<input
-type="url"
-name="linkedin">
+            </div>
 
-</div>
+            <div>
 
-<div>
+                <label>Email</label>
 
-<label>Email</label>
+                <input type="email" name="company_email">
 
-<input
-type="email"
-name="company_email">
+            </div>
 
-</div>
+            <div>
 
-<div>
+                <label>Phone</label>
 
-<label>Phone</label>
+                <input type="text" name="company_phone">
 
-<input
-type="text"
-name="company_phone">
+            </div>
 
-</div>
+             <div class="row">
 
-<div class="full">
+                  <!-- Selected Tags -->
 
-<label>Systems Used</label>
+                        <?php
+                        $systems = fetch_all("SELECT system_name FROM master_systems ORDER BY system_name");
+                        ?>
 
-<textarea
-name="systems_used"
-rows="3"
-placeholder="SAP, Oracle, Tally, ERP, CRM..."></textarea>
+                        <label>Systems Used</label>
 
-</div>
+                        <select id="system_select" class="form-control">
+                            <option value="">Select System</option>
 
-<hr class="full">
+                            <?php foreach ($systems as $row) { ?>
+                                <option value="<?= esc($row['system_name']) ?>">
+                                    <?= esc($row['system_name']) ?>
+                                </option>
+                            <?php } ?>
 
-<div class="section-title full">
+                            <option value="Other">Other</option>
+                        </select>
 
-Sales Information
+                        <div id="otherDiv" style="display:none;margin-top:10px;">
+                            <input type="text" id="otherSystem" class="form-control"
+                                placeholder="Enter new system and press Enter">
+                        </div>
 
-</div>
+                        <input type="hidden" name="systems_used" id="systems_used">
 
-<div>
+                        <div id="selectedSystems" style="margin-top:10px;"></div>
 
-<label>Prospect Level</label>
+                 </div>
 
-<select name="prospect">
+                <hr class="full">
 
-<option value="Hot">Hot</option>
+                <div class="section-title full">
 
-<option value="Warm" selected>Warm</option>
+                    Sales Information
 
-<option value="Cold">Cold</option>
+                </div>
 
-</select>
+                <div>
 
-</div>
+                    <label>Prospect Level</label>
 
-<div>
+                    <select name="prospect">
 
-<label>Lead Source</label>
+                        <option value="Hot">Hot</option>
 
-<select name="lead_source">
+                        <option value="Warm" selected>Warm</option>
 
-<option>Reference</option>
+                        <option value="Cold">Cold</option>
 
-<option>Website</option>
+                    </select>
 
-<option>Exhibition</option>
+                </div>
 
-<option>Cold Call</option>
+                <div>
 
-<option>LinkedIn</option>
+                    <label>Lead Source</label>
 
-<option>Email</option>
+                    <select name="lead_source">
 
-<option>Other</option>
+                        <option>Reference</option>
 
-</select>
+                        <option>Website</option>
 
-</div>
+                        <option>Exhibition</option>
 
-<div>
+                        <option>Cold Call</option>
 
-<label>Assigned To</label>
+                        <option>LinkedIn</option>
 
-<select name="assigned_to">
+                        <option>Email</option>
 
-<?php
-$users=fetch_all("SELECT id,name FROM users ORDER BY name");
-foreach($users as $u){
-?>
+                        <option>Other</option>
 
-<option value="<?= $u['id'] ?>">
+                    </select>
 
-<?= esc($u['name']) ?>
+                </div>
 
-</option>
+                <div>
 
-<?php } ?>
+                    <label>Assigned To</label>
 
-</select>
+                    <select name="assigned_to">
 
-</div>
+                        <?php
+                        $users = fetch_all("SELECT id,name FROM users ORDER BY name");
+                        foreach ($users as $u) {
+                            ?>
 
-<div>
+                            <option value="<?= $u['id'] ?>">
 
-<label>Status</label>
+                                <?= esc($u['name']) ?>
 
-<select name="status">
+                            </option>
 
-<option value="Active">Active</option>
+                        <?php } ?>
 
-<option value="Pending">Pending</option>
+                    </select>
 
-<option value="Inactive">Inactive</option>
+                </div>
 
-</select>
+                <div>
 
-</div>
+                    <label>Status</label>
 
-<div class="full">
+                    <select name="status">
 
-<label>Remarks</label>
+                        <option value="Active">Active</option>
 
-<textarea
-name="remarks"
-rows="5"></textarea>
+                        <option value="Pending">Pending</option>
 
-</div>
+                        <option value="Inactive">Inactive</option>
 
-<div class="full form-actions">
+                    </select>
 
-<button
-class="btn btn-primary"
-type="submit">
+                </div>
 
-<i class="fa fa-save"></i>
+                <div class="full">
 
-Save Company
+                    <label>Remarks</label>
 
-</button>
+                    <textarea name="remarks" rows="5"></textarea>
 
-<a
-href="<?= BASE_URL ?>modules/company_list.php"
-class="btn btn-outline">
+                </div>
 
-Cancel
+                <div class="full form-actions">
 
-</a>
+                    <button class="btn btn-primary" type="submit">
 
-</div>
+                        <i class="fa fa-save"></i>
 
-</form>
+                        Save Company
 
-</section>
+                    </button>
+
+                    <a href="<?= BASE_URL ?>modules/company_list.php" class="btn btn-outline">
+
+                        Cancel
+
+                    </a>
+
+                </div>
+
+        </form>
+
+    </section>
 
 </main>
+
+
 
 <?php include __DIR__ . '/../includes/footer.php'; ?>

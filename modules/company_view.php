@@ -234,9 +234,17 @@ include __DIR__ . '/../includes/sidebar.php';
                         <div class="hero-sub"><?php echo esc($company['industry'] ?? '-'); ?></div>
                     </div>
                     <div class="text-end">
+
                         <div class="hero-sub">Status</div>
+                        <a class="btn btn-sm btn-primary"
+                            href="<?= BASE_URL ?>modules/company_edit.php?id=<?= $company['id'] ?>">
+                            <i class="fa fa-edit"></i> Edit
+                        </a>&nbsp;&nbsp;&nbsp;&nbsp;
                         <span
                             class="badge bg-light text-dark px-3 py-2 mt-1"><?php echo esc($company['status'] ?? '-'); ?></span>
+
+
+
                     </div>
                 </div>
             </div>
@@ -336,6 +344,25 @@ include __DIR__ . '/../includes/sidebar.php';
                             <div class="col-12">
                                 <div class="muted-box"><span class="info-label">Address</span>
                                     <div class="info-value"><?php echo nl2br(esc($company['address'] ?? '-')); ?></div>
+                                </div>
+                            </div>
+
+                            <div class="mt-3">
+                                <label class="form-label fw-bold">Systems Used</label>
+
+                                <div class="d-flex flex-wrap gap-2 mt-2">
+                                    <?php
+                                    $systems = explode(',', $company['systems_used'] ?? '');
+
+                                    foreach ($systems as $system) {
+                                        $system = trim($system);
+                                        if ($system == '')
+                                            continue;
+                                        ?>
+                                        <span class="badge rounded-pill bg-primary px-3 py-2">
+                                            <?= esc($system) ?>
+                                        </span>
+                                    <?php } ?>
                                 </div>
                             </div>
                         </div>
@@ -538,7 +565,8 @@ include __DIR__ . '/../includes/sidebar.php';
                                     <div class="d-flex justify-content-between align-items-start">
                                         <div>
                                             <div class="fw-semibold">
-                                                <?php echo esc(ucfirst($row['communication_type'] ?? '-')); ?></div>
+                                                <?php echo esc(ucfirst($row['communication_type'] ?? '-')); ?>
+                                            </div>
                                             <div class="small text-muted">
                                                 <?php echo !empty($row['communication_date']) ? date('d M Y h:i A', strtotime($row['communication_date'])) : ''; ?>
                                             </div>
