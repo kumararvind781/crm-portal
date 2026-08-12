@@ -30,17 +30,67 @@ function count_table(string $table): int {
     $row = fetch_one("SELECT COUNT(*) AS total FROM {$table}");
     return (int)($row['total'] ?? 0);
 }
-function get_dashboard_stats(): array {
-    $pending = fetch_one("SELECT COUNT(*) total FROM follow_ups WHERE status = 'Pending'")['total'] ?? 0;
-    $completed = fetch_one("SELECT COUNT(*) total FROM follow_ups WHERE status = 'Completed'")['total'] ?? 0;
-    $overdue = fetch_one("SELECT COUNT(*) total FROM follow_ups WHERE status = 'Overdue'")['total'] ?? 0;
-    return ['clients'=>count_table('clients'),'cards'=>count_table('business_cards'),'pending'=>(int)$pending,'users'=>count_table('users'),'completed'=>(int)$completed,'overdue'=>(int)$overdue];
+function get_dashboard_stats() {
+    $stats = [];
+
+    // Clients
+    $row = fetch_one("SELECT COUNT(*) AS total FROM clients");
+    $stats['clients'] = (int) ($row['total'] ?? 0);
+
+    // Companies
+    $row = fetch_one("SELECT COUNT(*) AS total FROM companies");
+    $stats['companies'] = (int) ($row['total'] ?? 0);
+
+    // Follow-ups by status (auto overdue)
+    // Pending = future or today
+    $row = fetch_one("
+        SELECT COUNT(*) AS total
+        FROM follow_ups
+        WHERE status = 'Pending'
+          AND DATE(followup_date) >= CURDATE()
+    ");
+    $stats['pending'] = (int) ($row['total'] ?? 0);
+
+    // Completed = explicit status
+    $row = fetch_one("
+        SELECT COUNT(*) AS total
+        FROM follow_ups
+        WHERE status = 'Completed'
+    ");
+    $stats['completed'] = (int) ($row['total'] ?? 0);
+
+    // Overdue = pending with past date
+    $row = fetch_one("
+        SELECT COUNT(*) AS total
+        FROM follow_ups
+        WHERE status = 'Pending'
+          AND DATE(followup_date) < CURDATE()
+    ");
+    $stats['overdue'] = (int) ($row['total'] ?? 0);
+
+    // Active users
+    $row = fetch_one("SELECT COUNT(*) AS total FROM users WHERE status = 'Active'");
+    $stats['users'] = (int) ($row['total'] ?? 0);
+
+    return $stats;
 }
 function monthly_client_growth(): array {
     return fetch_all("SELECT DATE_FORMAT(created_at, '%b') AS month_name, MONTH(created_at) AS month_num, COUNT(*) AS total FROM clients WHERE YEAR(created_at)=YEAR(CURDATE()) GROUP BY MONTH(created_at), DATE_FORMAT(created_at, '%b') ORDER BY month_num");
 }
 function recent_clients(int $limit = 6): array {
-    return fetch_all("SELECT c.*, u.name AS assigned_name FROM clients c LEFT JOIN users u ON u.id = c.assigned_to ORDER BY c.id DESC LIMIT {$limit}");
+    return fetch_all("
+        SELECT
+            c.*,
+            comp.company_name AS company,
+            comp.company_phone AS company_phone,
+            comp.website AS company_website,
+            u.name AS assigned_name
+        FROM clients c
+        LEFT JOIN companies comp ON comp.id = c.company_id
+        LEFT JOIN users u ON u.id = c.assigned_to
+        ORDER BY c.id DESC
+        LIMIT {$limit}
+    ");
 }
 function upcoming_followups(int $limit = 5): array {
     return fetch_all("SELECT f.*, c.name AS client_name FROM follow_ups f INNER JOIN clients c ON c.id = f.client_id ORDER BY followup_date ASC LIMIT {$limit}");

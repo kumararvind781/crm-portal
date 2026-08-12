@@ -239,7 +239,7 @@ include __DIR__ . '/../includes/sidebar.php';
                     <div class="col-md-4">
                         <label class="form-label">Status</label>
                         <select name="status" class="form-select">
-                            <?php foreach (['Active','Pending','Qualified','Inactive'] as $s): ?>
+                            <?php foreach (['Active','Onboarding','Hold','Inactive'] as $s): ?>
                                 <option value="<?php echo $s; ?>" <?php echo (($client['status'] ?? 'Active') === $s) ? 'selected' : ''; ?>><?php echo $s; ?></option>
                             <?php endforeach; ?>
                         </select>
