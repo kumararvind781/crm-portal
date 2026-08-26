@@ -77,21 +77,34 @@ $upcomingMeeting = fetch_one(
 // manual response fatch 
 
 $companyResponses = fetch_all("
-SELECT
-    mr.*,
-    c.id AS client_id,
-    c.first_name,
-    c.last_name,
-    c.designation,
-    u.name AS created_name
-FROM client_manual_responses mr
-INNER JOIN clients c
-    ON c.id = mr.client_id
-LEFT JOIN users u
-    ON u.id = mr.created_by
-WHERE c.company_id = ?
-ORDER BY mr.created_at DESC
+    SELECT
+        mr.id,
+        mr.client_id,
+        mr.communication_by,
+        mr.response,
+        mr.attachment,
+        mr.created_at,
+
+        c.first_name,
+        c.last_name,
+        c.designation,
+
+        u.name AS created_name
+
+    FROM client_manual_responses mr
+
+    INNER JOIN clients c
+        ON c.id = mr.client_id
+
+    LEFT JOIN users u
+        ON u.id = mr.created_by
+
+    WHERE c.company_id = ?
+
+    ORDER BY mr.created_at DESC
 ", [$id]);
+
+
 
 $pageTitle = 'Company Details';
 $pageDescription = $company['company_name'] ?? 'Company Details';
@@ -583,8 +596,220 @@ include __DIR__ . '/../includes/sidebar.php';
             </div>
         </div>
 
-        
 
+        <!-- add manual response section start  -->
+
+
+      <!-- ===========================
+     COMPANY MANUAL RESPONSES
+=========================== -->
+
+<div class="card panel-card mt-4">
+
+    <!-- HEADER / CLICK TO OPEN -->
+    <div class="card-header bg-white p-0">
+
+        <button
+            class="btn w-100 text-start d-flex justify-content-between align-items-center py-3 px-3"
+            type="button"
+            data-bs-toggle="collapse"
+            data-bs-target="#companyManualResponseCollapse"
+            aria-expanded="false"
+            aria-controls="companyManualResponseCollapse"
+        >
+
+            <h5 class="section-title mb-0">
+
+                <i class="fa fa-comments text-success me-2"></i>
+
+                Manual Responses
+
+                <span class="badge bg-primary ms-2">
+                    <?= count($companyResponses) ?>
+                </span>
+
+            </h5>
+
+            <i class="fas fa-chevron-down"></i>
+
+        </button>
+
+    </div>
+
+
+    <!-- COLLAPSE CONTENT -->
+    <div
+        id="companyManualResponseCollapse"
+        class="collapse"
+    >
+
+        <div class="card-body">
+
+            <?php if (empty($companyResponses)): ?>
+
+                <div class="text-center text-muted py-4">
+
+                    <i class="fa fa-comments fa-2x mb-3"></i>
+
+                    <div>
+                        No manual responses found for this company.
+                    </div>
+
+                </div>
+
+
+            <?php else: ?>
+
+
+                <?php foreach ($companyResponses as $index => $row): ?>
+
+                    <div class="timeline-item mb-4">
+
+                        <div class="d-flex justify-content-between align-items-start flex-wrap">
+
+                            <div>
+
+                                <div class="fw-bold">
+
+                                    <?php if ($row['communication_by'] === 'Client'): ?>
+
+                                        <!-- CLIENT -->
+
+                                        <i class="fa fa-user text-danger me-1"></i>
+
+                                        <a
+                                            href="<?= BASE_URL ?>modules/client_view.php?id=<?= (int)$row['client_id'] ?>"
+                                            class="text-decoration-none"
+                                        >
+
+                                            <?= esc(trim(
+                                                ($row['first_name'] ?? '') . ' ' .
+                                                ($row['last_name'] ?? '')
+                                            )) ?>
+
+                                        </a>
+
+                                        <span class="badge bg-danger ms-2">
+                                            Client
+                                        </span>
+
+
+                                    <?php else: ?>
+
+                                        <!-- UNIRE / LOGGED-IN USER -->
+
+                                        <i class="fa fa-building text-success me-1"></i>
+
+                                        <?= esc($row['created_name'] ?? 'Unknown User') ?>
+
+                                        <span class="badge bg-success ms-2">
+                                            Unire
+                                        </span>
+
+                                    <?php endif; ?>
+
+                                </div>
+
+
+                                <?php if (!empty($row['designation'])): ?>
+
+                                    <div class="small text-muted mt-1">
+
+                                        <?= esc($row['designation']) ?>
+
+                                    </div>
+
+                                <?php endif; ?>
+
+                            </div>
+
+
+                            <!-- DATE -->
+
+                            <small class="text-muted">
+
+                                <?php if (!empty($row['created_at'])): ?>
+
+                                    <?= date(
+                                        'd M Y h:i A',
+                                        strtotime($row['created_at'])
+                                    ) ?>
+
+                                <?php else: ?>
+
+                                    -
+
+                                <?php endif; ?>
+
+                            </small>
+
+                        </div>
+
+
+                        <!-- RESPONSE -->
+
+                        <div class="mt-3">
+
+                            <?= nl2br(esc($row['response'])) ?>
+
+                        </div>
+
+
+                        <!-- ATTACHMENT -->
+
+                        <?php if (!empty($row['attachment'])): ?>
+
+                            <div class="mt-3">
+
+                                <a
+                                    href="<?= BASE_URL . esc($row['attachment']) ?>"
+                                    target="_blank"
+                                    class="btn btn-sm btn-outline-primary"
+                                >
+
+                                    <i class="fa fa-paperclip me-1"></i>
+
+                                    Attachment
+
+                                </a>
+
+                            </div>
+
+                        <?php endif; ?>
+
+
+                        <!-- CREATED BY -->
+
+                        <div class="small text-muted mt-3">
+
+                            Added By:
+
+                            <strong>
+                                <?= esc($row['created_name'] ?? 'Unknown User') ?>
+                            </strong>
+
+                        </div>
+
+                    </div>
+
+
+                    <?php if ($index < count($companyResponses) - 1): ?>
+
+                        <hr>
+
+                    <?php endif; ?>
+
+
+                <?php endforeach; ?>
+
+
+            <?php endif; ?>
+
+        </div>
+
+    </div>
+
+</div>
 
         <!-- add manual response section end   -->
     </div>

@@ -103,7 +103,7 @@ function status_badge_class(string $status): string {
         default => 'default',
     };
 }
-function page_title(): string { return $GLOBALS['pageTitle'] ?? 'Dashboard'; }
+function page_title(): string { return $GLOBALS['pageTitle'] ?? 'Unire Portal'; }
 function page_description(): string { return $GLOBALS['pageDescription'] ?? 'Track clients, uploads, reminders and team activity in one place.'; }
 function active_nav(string $page): string { return basename($_SERVER['PHP_SELF']) === $page ? 'active' : ''; }
 function upload_card_file(array $file): ?string {
@@ -116,7 +116,11 @@ function upload_card_file(array $file): ?string {
     return null;
 }
 function is_admin(): bool {
-    return in_array($_SESSION['user']['role'] ?? '', ['Super Admin','Manager'], true);
+    return ($_SESSION['user']['role'] ?? '') === 'Super Admin';
+}
+
+if (is_admin()) {
+    // Show Delete button
 }
 function require_admin(): void {
     if (!is_admin()) redirect_path('index.php');
