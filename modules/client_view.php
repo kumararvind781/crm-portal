@@ -692,12 +692,13 @@ margin-right:20px;
 
         <!-- manual respons -->
 
-        <!-- ===========================
-MANUAL RESPONSE
-=========================== -->
+        <!-- =========================================================
+     MANUAL RESPONSE
+========================================================= -->
 
         <div class="card shadow-sm mt-4" id="manual-response">
 
+            <!-- HEADER -->
             <div class="card-header bg-white d-flex justify-content-between align-items-center">
 
                 <h5 class="mb-0">
@@ -708,43 +709,49 @@ MANUAL RESPONSE
                 <button class="btn btn-success btn-sm" type="button" onclick="toggleManualResponse()">
 
                     <i class="fas fa-plus"></i>
-
                     Add Response
 
                 </button>
 
             </div>
 
+
             <div class="card-body">
+
+                <!-- =====================================================
+             ADD RESPONSE FORM
+        ====================================================== -->
 
                 <form id="manualResponseForm" action="<?= BASE_URL ?>modules/manual_response_save.php" method="post"
                     style="display:none;">
 
-                    <input type="hidden" name="client_id" value="<?= $client['id'] ?>">
+                    <input type="hidden" name="client_id" value="<?= (int) $client['id'] ?>">
+
 
                     <div class="row">
 
+                        <!-- COMMUNICATION BY -->
                         <div class="col-md-3">
 
-                            <label class="form-label">
-
+                            <label class="form-label fw-semibold">
                                 Communication By
-
                             </label>
 
                             <select class="form-select" name="communication_by" required>
 
-                                <option value="">Select</option>
-
-                                <option value="Client">
-
-                                    Client
-
+                                <option value="">
+                                    Select
                                 </option>
 
-                                <option value="Unire">
+                                <!-- CLIENT -->
+                                <option value="Client">
+                                    Client
+                                </option>
 
-                                    Unire
+                                <!-- LOGGED-IN USER -->
+                                <option value="<?= esc($_SESSION['user']['name'] ?? '') ?>">
+
+                                    <?= esc($_SESSION['user']['name'] ?? 'User') ?>
 
                                 </option>
 
@@ -752,12 +759,12 @@ MANUAL RESPONSE
 
                         </div>
 
+
+                        <!-- RESPONSE -->
                         <div class="col-md-9">
 
-                            <label class="form-label">
-
+                            <label class="form-label fw-semibold">
                                 Response
-
                             </label>
 
                             <textarea class="form-control" name="response" rows="4" required></textarea>
@@ -766,13 +773,17 @@ MANUAL RESPONSE
 
                     </div>
 
+
+                    <!-- BUTTONS -->
                     <div class="mt-3">
 
                         <button class="btn btn-success" type="submit">
 
+                            <i class="fas fa-save me-1"></i>
                             Save Response
 
                         </button>
+
 
                         <button class="btn btn-secondary" type="button" onclick="toggleManualResponse()">
 
@@ -786,103 +797,141 @@ MANUAL RESPONSE
 
                 </form>
 
+
+                <!-- =====================================================
+             RESPONSE HISTORY
+        ====================================================== -->
+
                 <?php if (empty($manualResponses)): ?>
 
-                    <div class="text-center text-muted">
+                    <div class="text-center text-muted py-4">
 
-                        No manual responses available.
+                        <i class="fas fa-comments fa-2x mb-2 opacity-50"></i>
+
+                        <div>
+                            No manual responses available.
+                        </div>
 
                     </div>
 
+
                 <?php else: ?>
+
 
                     <?php foreach ($manualResponses as $row): ?>
 
                         <div class="timeline-item">
 
+                            <!-- ICON -->
                             <div class="timeline-icon">
 
-                                <?= $row['communication_by'] == "Client" ? "👤" : "🏢"; ?>
+                                <?php if ($row['communication_by'] === 'Client'): ?>
+
+                                    👤
+
+                                <?php else: ?>
+
+                                    👨‍💼
+
+                                <?php endif; ?>
 
                             </div>
 
+
+                            <!-- CONTENT -->
                             <div class="timeline-content">
 
-                                <div class="d-flex justify-content-between">
+                                <div class="d-flex justify-content-between align-items-start">
 
-                                    <h6>
+                                    <h6 class="mb-1">
 
-                                        <?php if ($row['communication_by'] == "Client"): ?>
+                                        <?php if ($row['communication_by'] === 'Client'): ?>
 
-                                            <?= esc(trim(($client['first_name'] ?? '') . ' ' . ($client['last_name'] ?? ''))) ?>
+                                            <?= esc(
+                                                trim(
+                                                    ($client['first_name'] ?? '') .
+                                                    ' ' .
+                                                    ($client['last_name'] ?? '')
+                                                )
+                                            ) ?>
 
-                                            <span class="badge bg-danger ms-2">Client</span>
+                                            <span class="badge bg-danger ms-2">
+                                                Client
+                                            </span>
+
 
                                         <?php else: ?>
 
-                                            Unire
+                                            <?= esc($row['communication_by']) ?>
 
-                                            <span class="badge bg-success ms-2">Unire</span>
+                                            <span class="badge bg-success ms-2">
+                                                <?= esc($row['communication_by']) ?>
+                                            </span>
 
                                         <?php endif; ?>
 
                                     </h6>
 
-                                    <small>
 
-                                        <?= date(
-                                            'd M Y h:i A',
-                                            strtotime($row['created_at'])
-                                        ) ?>
+                                    <small class="text-muted">
+
+                                        <?= !empty($row['created_at'])
+                                            ? date(
+                                                'd M Y h:i A',
+                                                strtotime($row['created_at'])
+                                            )
+                                            : '';
+                                        ?>
 
                                     </small>
 
                                 </div>
 
-                                    <!-- <div class="mb-2">
 
-                                        <?php if ($row['communication_by'] == "Client"): ?>
+                                <!-- RESPONSE -->
+                                <div class="mt-2">
 
-                                            <span class="badge bg-danger">
+                                    <?= nl2br(
+                                        esc($row['response'])
+                                    ) ?>
 
-                                                Client
+                                </div>
 
-                                            </span>
 
-                                        <?php else: ?>
-
-                                            <span class="badge bg-success">
-
-                                                Unire
-
-                                            </span>
-
-                                        <?php endif; ?>
-
-                                    </div> -->
-
-                                <p>
-
-                                    <?= nl2br(esc($row['response'])) ?>
-
-                                </p>
-
+                                <!-- ATTACHMENT -->
                                 <?php if (!empty($row['attachment'])): ?>
 
-                                    <a href="<?= BASE_URL . esc($row['attachment']) ?>" target="_blank"
-                                        class="btn btn-sm btn-outline-primary">
+                                    <div class="mt-3">
 
-                                        Attachment
+                                        <a href="<?= BASE_URL . esc($row['attachment']) ?>" target="_blank"
+                                            class="btn btn-sm btn-outline-primary">
 
-                                    </a>
+                                            <i class="fas fa-paperclip me-1"></i>
+                                            Attachment
+
+                                        </a>
+
+                                    </div>
 
                                 <?php endif; ?>
 
-                                <div class="text-muted mt-2">
 
-                                    Added By :
+                                <!-- CREATED BY -->
+                                <div class="text-muted small mt-3">
 
-                                    <?= esc($row['created_name']) ?>
+                                    <i class="fas fa-user me-1"></i>
+
+                                    Added by:
+
+                                    <strong>
+
+                                        <?= esc(
+                                            $row['created_name']
+                                            ?? $row['created_by_name']
+                                            ?? 'Unknown User'
+                                        ) ?>
+
+                                    </strong>
 
                                 </div>
 
@@ -890,9 +939,11 @@ MANUAL RESPONSE
 
                         </div>
 
+
                         <hr>
 
                     <?php endforeach; ?>
+
 
                 <?php endif; ?>
 
@@ -900,25 +951,26 @@ MANUAL RESPONSE
 
         </div>
 
+
+        <!-- =========================================================
+     TOGGLE SCRIPT
+========================================================= -->
+
         <script>
 
             function toggleManualResponse() {
+                const form = document.getElementById("manualResponseForm");
 
-                let f = document.getElementById("manualResponseForm");
-
-                if (f.style.display == "none") {
-
-                    f.style.display = "block";
-
-                } else {
-
-                    f.style.display = "none";
-
+                if (form.style.display === "none" || form.style.display === "") {
+                    form.style.display = "block";
                 }
-
+                else {
+                    form.style.display = "none";
+                }
             }
 
         </script>
+
 
         <!-- manual respons end  -->
 
