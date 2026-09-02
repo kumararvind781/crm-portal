@@ -17,6 +17,17 @@ LEFT JOIN users u
 WHERE c.id = ?
 ", [$id]);
 
+$oldCompanies = fetch_all("
+    SELECT 
+        co.id,
+        co.company_name
+    FROM client_old_companies coc
+    INNER JOIN companies co
+        ON co.id = coc.company_id
+    WHERE coc.client_id = ?
+    ORDER BY coc.id DESC
+", [$id]);
+
 /* ---------------- FOLLOW UPS ---------------- */
 
 $followups = fetch_all(
@@ -282,6 +293,32 @@ margin-right:20px;
 
                             </div>
 
+                            <div class="col-md-6">
+                                <label class="text-muted small">Business Email</label>
+                                <h6>
+                                    <?php if (!empty($client['business_email'])): ?>
+                                        <a href="mailto:<?= esc($client['business_email']) ?>">
+                                            <?= esc($client['business_email']) ?>
+                                        </a>
+                                    <?php else: ?>
+                                        -
+                                    <?php endif; ?>
+                                </h6>
+                            </div>
+
+                            <div class="col-md-6">
+                                <label class="text-muted small">Business Phone</label>
+                                <h6>
+                                    <?php if (!empty($client['business_phone'])): ?>
+                                        <a href="tel:<?= esc($client['business_phone']) ?>">
+                                            <?= esc($client['business_phone']) ?>
+                                        </a>
+                                    <?php else: ?>
+                                        -
+                                    <?php endif; ?>
+                                </h6>
+                            </div>
+
                             <div class="col-md-12">
                                 <label class="text-muted small">Address</label>
 
@@ -289,6 +326,13 @@ margin-right:20px;
                                     <?= esc($client['person_address'] ?? '-') ?>
                                 </h6>
 
+                            </div>
+
+                            <div class="col-md-6">
+                                <label class="text-muted small">Current Company</label>
+                                <h6>
+                                    <?= esc($client['company_name'] ?? 'No Company / Not Associated') ?>
+                                </h6>
                             </div>
 
                             <div class="col-md-6">
@@ -307,6 +351,28 @@ margin-right:20px;
                                     <?= esc($client['person_country'] ?? '-') ?>
                                 </h6>
 
+                            </div>
+
+                            <div class="col-md-12">
+                                <label class="text-muted small">Old Companies</label>
+
+                                <div class="mt-2">
+                                    <?php if (empty($oldCompanies)): ?>
+
+                                        <span class="text-muted">No old company</span>
+
+                                    <?php else: ?>
+
+                                        <?php foreach ($oldCompanies as $oldCompany): ?>
+
+                                            <span class="badge bg-light text-dark border me-2 mb-2 px-3 py-2">
+                                                <?= esc($oldCompany['company_name']) ?>
+                                            </span>
+
+                                        <?php endforeach; ?>
+
+                                    <?php endif; ?>
+                                </div>
                             </div>
 
                             <div class="col-md-12">

@@ -44,6 +44,15 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
     $clientId = (int) $_POST['client_id'];
 
+    $client = fetch_one(
+        "SELECT company_id FROM clients WHERE id = ?",
+        [$clientId]
+    );
+
+    $companyId = !empty($client['company_id'])
+        ? (int) $client['company_id']
+        : null;
+
     $date = $_POST['followup_date'];
 
     $status = trim($_POST['status']);
@@ -82,6 +91,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             "INSERT INTO follow_ups
     (
         client_id,
+        company_id,
         followup_date,
         status,
         notes,
@@ -89,9 +99,10 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         assigned_to,
         created_by
     )
-    VALUES (?,?,?,?,?,?,?)",
+    VALUES (?,?,?,?,?,?,?,?)",
             [
                 $clientId,
+                $companyId,
                 $date,
                 $status,
                 $notes,
@@ -321,7 +332,7 @@ $users = fetch_all("SELECT id, name FROM users ORDER BY name");
 
             <div class="panel-header">
                 <h3>Scheduled Follow-ups</h3>
-                
+
             </div>
             <input type="text" id="followupSearch" placeholder="Search follow-ups..." onkeyup="searchFollowups()">
 
@@ -339,7 +350,7 @@ $users = fetch_all("SELECT id, name FROM users ORDER BY name");
                             <th>Platform</th>
                             <th>Follow Up Person</th>
                             <th>Notes</th>
-                            
+
                             <th width="180">Action</th>
                         </tr>
 
@@ -468,6 +479,6 @@ $users = fetch_all("SELECT id, name FROM users ORDER BY name");
 
 </main>
 
-<script>function searchFollowups(){let input=document.getElementById('followupSearch').value.toLowerCase(),rows=document.querySelectorAll('table tbody tr');rows.forEach(row=>row.style.display=row.innerText.toLowerCase().includes(input)?'':'none');}</script>
+<script>function searchFollowups() { let input = document.getElementById('followupSearch').value.toLowerCase(), rows = document.querySelectorAll('table tbody tr'); rows.forEach(row => row.style.display = row.innerText.toLowerCase().includes(input) ? '' : 'none'); }</script>
 
 <?php include __DIR__ . '/../includes/footer.php'; ?>

@@ -17,11 +17,26 @@ if (!$company) {
 }
 
 $contacts = fetch_all(
-    "SELECT *
-     FROM clients
-     WHERE company_id = ?
-     ORDER BY first_name ASC, last_name ASC",
-    [$id]
+    "SELECT
+        c.*,
+        CASE
+            WHEN c.company_id = ? THEN 'Current'
+            ELSE 'Previous'
+        END AS company_relation
+     FROM clients c
+     WHERE c.company_id = ?
+
+        OR c.id IN (
+            SELECT client_id
+            FROM client_old_companies
+            WHERE company_id = ?
+        )
+
+     ORDER BY
+        company_relation ASC,
+        c.first_name ASC,
+        c.last_name ASC",
+    [$id, $id, $id]
 );
 
 $meetings = fetch_all(
@@ -41,8 +56,15 @@ $followups = fetch_all(
      INNER JOIN clients c ON c.id = f.client_id
      LEFT JOIN users u ON u.id = f.created_by
      WHERE c.company_id = ?
+
+        OR c.id IN (
+            SELECT client_id
+            FROM client_old_companies
+            WHERE company_id = ?
+        )
+
      ORDER BY f.followup_date DESC, f.id DESC",
-    [$id]
+    [$id, $id]
 );
 
 $communications = fetch_all(
@@ -74,12 +96,13 @@ $upcomingMeeting = fetch_one(
     [$id]
 );
 
-// manual response fatch 
+// manual response fetch
 
 $companyResponses = fetch_all("
     SELECT
         mr.id,
         mr.client_id,
+        mr.company_id,
         mr.communication_by,
         mr.response,
         mr.attachment,
@@ -99,11 +122,10 @@ $companyResponses = fetch_all("
     LEFT JOIN users u
         ON u.id = mr.created_by
 
-    WHERE c.company_id = ?
+    WHERE mr.company_id = ?
 
     ORDER BY mr.created_at DESC
 ", [$id]);
-
 
 
 $pageTitle = 'Company Details';
