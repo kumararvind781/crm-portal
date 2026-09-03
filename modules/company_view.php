@@ -20,9 +20,9 @@ $contacts = fetch_all(
     "SELECT
         c.*,
         CASE
-            WHEN c.company_id = ? THEN 'Current'
-            ELSE 'Previous'
-        END AS company_relation
+            WHEN c.company_id = ? THEN 'Active'
+            ELSE 'Left'
+        END AS company_status
      FROM clients c
      WHERE c.company_id = ?
 
@@ -33,10 +33,13 @@ $contacts = fetch_all(
         )
 
      ORDER BY
-        company_relation ASC,
+        CASE
+            WHEN c.company_id = ? THEN 0
+            ELSE 1
+        END,
         c.first_name ASC,
         c.last_name ASC",
-    [$id, $id, $id]
+    [$id, $id, $id, $id]
 );
 
 $meetings = fetch_all(
@@ -574,7 +577,12 @@ include __DIR__ . '/../includes/sidebar.php';
                                                 <td><?php echo !empty($contact['email']) ? '<a href="mailto:' . esc($contact['email']) . '">' . esc($contact['email']) . '</a>' : '-'; ?>
                                                 </td>
                                                 <td><?php echo esc($contact['phone'] ?? '-'); ?></td>
-                                                <td><?php echo esc($contact['status'] ?? '-'); ?></td>
+                                                <td>
+                                                    <span
+                                                        class="badge <?= ($contact['company_status'] ?? '') === 'Active' ? 'success' : 'danger' ?>">
+                                                        <?= esc($contact['company_status'] ?? '-') ?>
+                                                    </span>
+                                                </td>
                                             </tr>
                                         <?php endforeach; ?>
                                     </tbody>
@@ -622,216 +630,203 @@ include __DIR__ . '/../includes/sidebar.php';
         <!-- add manual response section start  -->
 
 
-      <!-- ===========================
+        <!-- ===========================
      COMPANY MANUAL RESPONSES
 =========================== -->
 
-<div class="card panel-card mt-4">
+        <div class="card panel-card mt-4">
 
-    <!-- HEADER / CLICK TO OPEN -->
-    <div class="card-header bg-white p-0">
+            <!-- HEADER / CLICK TO OPEN -->
+            <div class="card-header bg-white p-0">
 
-        <button
-            class="btn w-100 text-start d-flex justify-content-between align-items-center py-3 px-3"
-            type="button"
-            data-bs-toggle="collapse"
-            data-bs-target="#companyManualResponseCollapse"
-            aria-expanded="false"
-            aria-controls="companyManualResponseCollapse"
-        >
+                <button class="btn w-100 text-start d-flex justify-content-between align-items-center py-3 px-3"
+                    type="button" data-bs-toggle="collapse" data-bs-target="#companyManualResponseCollapse"
+                    aria-expanded="false" aria-controls="companyManualResponseCollapse">
 
-            <h5 class="section-title mb-0">
+                    <h5 class="section-title mb-0">
 
-                <i class="fa fa-comments text-success me-2"></i>
+                        <i class="fa fa-comments text-success me-2"></i>
 
-                Manual Responses
+                        Manual Responses
 
-                <span class="badge bg-primary ms-2">
-                    <?= count($companyResponses) ?>
-                </span>
+                        <span class="badge bg-primary ms-2">
+                            <?= count($companyResponses) ?>
+                        </span>
 
-            </h5>
+                    </h5>
 
-            <i class="fas fa-chevron-down"></i>
+                    <i class="fas fa-chevron-down"></i>
 
-        </button>
+                </button>
 
-    </div>
+            </div>
 
 
-    <!-- COLLAPSE CONTENT -->
-    <div
-        id="companyManualResponseCollapse"
-        class="collapse"
-    >
+            <!-- COLLAPSE CONTENT -->
+            <div id="companyManualResponseCollapse" class="collapse">
 
-        <div class="card-body">
+                <div class="card-body">
 
-            <?php if (empty($companyResponses)): ?>
+                    <?php if (empty($companyResponses)): ?>
 
-                <div class="text-center text-muted py-4">
+                        <div class="text-center text-muted py-4">
 
-                    <i class="fa fa-comments fa-2x mb-3"></i>
-
-                    <div>
-                        No manual responses found for this company.
-                    </div>
-
-                </div>
-
-
-            <?php else: ?>
-
-
-                <?php foreach ($companyResponses as $index => $row): ?>
-
-                    <div class="timeline-item mb-4">
-
-                        <div class="d-flex justify-content-between align-items-start flex-wrap">
+                            <i class="fa fa-comments fa-2x mb-3"></i>
 
                             <div>
+                                No manual responses found for this company.
+                            </div>
 
-                                <div class="fw-bold">
-
-                                    <?php if ($row['communication_by'] === 'Client'): ?>
-
-                                        <!-- CLIENT -->
-
-                                        <i class="fa fa-user text-danger me-1"></i>
-
-                                        <a
-                                            href="<?= BASE_URL ?>modules/client_view.php?id=<?= (int)$row['client_id'] ?>"
-                                            class="text-decoration-none"
-                                        >
-
-                                            <?= esc(trim(
-                                                ($row['first_name'] ?? '') . ' ' .
-                                                ($row['last_name'] ?? '')
-                                            )) ?>
-
-                                        </a>
-
-                                        <span class="badge bg-danger ms-2">
-                                            Client
-                                        </span>
+                        </div>
 
 
-                                    <?php else: ?>
+                    <?php else: ?>
 
-                                        <!-- UNIRE / LOGGED-IN USER -->
 
-                                        <i class="fa fa-building text-success me-1"></i>
+                        <?php foreach ($companyResponses as $index => $row): ?>
 
-                                        <?= esc($row['created_name'] ?? 'Unknown User') ?>
+                            <div class="timeline-item mb-4">
 
-                                        <span class="badge bg-success ms-2">
-                                            Unire
-                                        </span>
+                                <div class="d-flex justify-content-between align-items-start flex-wrap">
 
-                                    <?php endif; ?>
+                                    <div>
+
+                                        <div class="fw-bold">
+
+                                            <?php if ($row['communication_by'] === 'Client'): ?>
+
+                                                <!-- CLIENT -->
+
+                                                <i class="fa fa-user text-danger me-1"></i>
+
+                                                <a href="<?= BASE_URL ?>modules/client_view.php?id=<?= (int) $row['client_id'] ?>"
+                                                    class="text-decoration-none">
+
+                                                    <?= esc(trim(
+                                                        ($row['first_name'] ?? '') . ' ' .
+                                                        ($row['last_name'] ?? '')
+                                                    )) ?>
+
+                                                </a>
+
+                                                <span class="badge bg-danger ms-2">
+                                                    Client
+                                                </span>
+
+
+                                            <?php else: ?>
+
+                                                <!-- UNIRE / LOGGED-IN USER -->
+
+                                                <i class="fa fa-building text-success me-1"></i>
+
+                                                <?= esc($row['created_name'] ?? 'Unknown User') ?>
+
+                                                <span class="badge bg-success ms-2">
+                                                    Unire
+                                                </span>
+
+                                            <?php endif; ?>
+
+                                        </div>
+
+
+                                        <?php if (!empty($row['designation'])): ?>
+
+                                            <div class="small text-muted mt-1">
+
+                                                <?= esc($row['designation']) ?>
+
+                                            </div>
+
+                                        <?php endif; ?>
+
+                                    </div>
+
+
+                                    <!-- DATE -->
+
+                                    <small class="text-muted">
+
+                                        <?php if (!empty($row['created_at'])): ?>
+
+                                            <?= date(
+                                                'd M Y h:i A',
+                                                strtotime($row['created_at'])
+                                            ) ?>
+
+                                        <?php else: ?>
+
+                                            -
+
+                                        <?php endif; ?>
+
+                                    </small>
 
                                 </div>
 
 
-                                <?php if (!empty($row['designation'])): ?>
+                                <!-- RESPONSE -->
 
-                                    <div class="small text-muted mt-1">
+                                <div class="mt-3">
 
-                                        <?= esc($row['designation']) ?>
+                                    <?= nl2br(esc($row['response'])) ?>
+
+                                </div>
+
+
+                                <!-- ATTACHMENT -->
+
+                                <?php if (!empty($row['attachment'])): ?>
+
+                                    <div class="mt-3">
+
+                                        <a href="<?= BASE_URL . esc($row['attachment']) ?>" target="_blank"
+                                            class="btn btn-sm btn-outline-primary">
+
+                                            <i class="fa fa-paperclip me-1"></i>
+
+                                            Attachment
+
+                                        </a>
 
                                     </div>
 
                                 <?php endif; ?>
 
-                            </div>
 
+                                <!-- CREATED BY -->
 
-                            <!-- DATE -->
+                                <div class="small text-muted mt-3">
 
-                            <small class="text-muted">
+                                    Added By:
 
-                                <?php if (!empty($row['created_at'])): ?>
+                                    <strong>
+                                        <?= esc($row['created_name'] ?? 'Unknown User') ?>
+                                    </strong>
 
-                                    <?= date(
-                                        'd M Y h:i A',
-                                        strtotime($row['created_at'])
-                                    ) ?>
-
-                                <?php else: ?>
-
-                                    -
-
-                                <?php endif; ?>
-
-                            </small>
-
-                        </div>
-
-
-                        <!-- RESPONSE -->
-
-                        <div class="mt-3">
-
-                            <?= nl2br(esc($row['response'])) ?>
-
-                        </div>
-
-
-                        <!-- ATTACHMENT -->
-
-                        <?php if (!empty($row['attachment'])): ?>
-
-                            <div class="mt-3">
-
-                                <a
-                                    href="<?= BASE_URL . esc($row['attachment']) ?>"
-                                    target="_blank"
-                                    class="btn btn-sm btn-outline-primary"
-                                >
-
-                                    <i class="fa fa-paperclip me-1"></i>
-
-                                    Attachment
-
-                                </a>
+                                </div>
 
                             </div>
 
-                        <?php endif; ?>
+
+                            <?php if ($index < count($companyResponses) - 1): ?>
+
+                                <hr>
+
+                            <?php endif; ?>
 
 
-                        <!-- CREATED BY -->
+                        <?php endforeach; ?>
 
-                        <div class="small text-muted mt-3">
-
-                            Added By:
-
-                            <strong>
-                                <?= esc($row['created_name'] ?? 'Unknown User') ?>
-                            </strong>
-
-                        </div>
-
-                    </div>
-
-
-                    <?php if ($index < count($companyResponses) - 1): ?>
-
-                        <hr>
 
                     <?php endif; ?>
 
+                </div>
 
-                <?php endforeach; ?>
-
-
-            <?php endif; ?>
+            </div>
 
         </div>
-
-    </div>
-
-</div>
 
         <!-- add manual response section end   -->
     </div>

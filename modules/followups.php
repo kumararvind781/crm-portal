@@ -148,7 +148,39 @@ ORDER BY c.first_name,c.last_name
 
 
 /* ---------------- FOLLOWUP LIST ---------------- */
-$followups = fetch_all("SELECT f.*, CONCAT(c.first_name,' ',c.last_name) AS client_name, co.company_name, u.name AS created_name, au.name AS assigned_name FROM follow_ups f INNER JOIN clients c ON c.id=f.client_id LEFT JOIN companies co ON co.id=c.company_id LEFT JOIN users u ON u.id=f.created_by LEFT JOIN users au ON au.id=f.assigned_to ORDER BY f.followup_date ASC");
+
+$followups = fetch_all("
+    SELECT
+        f.*,
+        CONCAT(c.first_name, ' ', c.last_name) AS client_name,
+        co.company_name,
+        u.name AS created_name,
+        au.name AS assigned_name
+    FROM follow_ups f
+    INNER JOIN clients c
+        ON c.id = f.client_id
+    LEFT JOIN companies co
+        ON co.id = c.company_id
+    LEFT JOIN users u
+        ON u.id = f.created_by
+    LEFT JOIN users au
+        ON au.id = f.assigned_to
+
+    ORDER BY
+        CASE
+            WHEN f.status = 'Overdue' THEN 1
+            WHEN f.status = 'Pending' THEN 2
+            WHEN f.status = 'Completed' THEN 3
+            WHEN f.status = 'Hold' THEN 4
+            ELSE 5
+        END ASC,
+
+        f.followup_date DESC,
+        f.id DESC
+");
+
+
+
 include __DIR__ . '/../includes/header.php';
 include __DIR__ . '/../includes/sidebar.php';
 
@@ -390,15 +422,7 @@ $users = fetch_all("SELECT id, name FROM users ORDER BY name");
 
                                     <td>
 
-                                        <?= date('d M Y', strtotime($row['followup_date'])) ?>
-
-                                        <br>
-
-                                        <small class="text-muted">
-
-                                            <?= date('h:i A', strtotime($row['followup_date'])) ?>
-
-                                        </small>
+                                      <?= date('d M, h:i A', strtotime($row['followup_date'])) ?>
 
                                     </td>
 

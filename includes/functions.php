@@ -93,7 +93,18 @@ function recent_clients(int $limit = 6): array {
     ");
 }
 function upcoming_followups(int $limit = 5): array {
-    return fetch_all("SELECT f.*, c.name AS client_name FROM follow_ups f INNER JOIN clients c ON c.id = f.client_id ORDER BY followup_date ASC LIMIT {$limit}");
+    return fetch_all("
+        SELECT
+            f.*,
+            c.name AS client_name
+        FROM follow_ups f
+        INNER JOIN clients c
+            ON c.id = f.client_id
+        WHERE f.followup_date >= NOW()
+        ORDER BY f.followup_date ASC
+        LIMIT {$limit}
+    ");
+
 }
 function status_badge_class(string $status): string {
     return match ($status) {

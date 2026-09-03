@@ -70,7 +70,7 @@ include __DIR__ . '/includes/sidebar.php';
     <!-- Top stats -->
     <section class="stats-grid">
         <article class="stat-card">
-            <a href="<?= BASE_URL ?>modules/client_list.php" class="stat-link">
+            <a href="<?= BASE_URL ?>modules/clients.php" class="stat-link">
                 <div class="stat-content">
                     <span>Total Clients</span>
                     <h3><?= (int) ($stats['clients'] ?? 0) ?></h3>
@@ -94,7 +94,7 @@ include __DIR__ . '/includes/sidebar.php';
         </article>
 
         <article class="stat-card">
-            <a href="<?= BASE_URL ?>modules/followup_list.php?status=pending" class="stat-link">
+            <a href="<?= BASE_URL ?>modules/followups.php?status=pending" class="stat-link">
                 <div class="stat-content">
                     <span>Open Follow-ups</span>
                     <?php
