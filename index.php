@@ -189,6 +189,9 @@ include __DIR__ . '/includes/sidebar.php';
                     <div class="follow-item">
                         <strong><?= esc($item['client_name']) ?></strong>
                         <p><?= date('d M, h:i A', strtotime($item['followup_date'])) ?> · <?= esc($item['notes']) ?></p>
+                        <span class="badge <?= status_badge_class($item['status']) ?>">
+    <?= esc($item['status']) ?>
+</span>
                     </div>
                 <?php endforeach; ?>
             </div>

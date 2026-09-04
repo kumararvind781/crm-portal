@@ -62,30 +62,29 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
     $notes = trim($_POST['notes']);
 
-    if (!empty($_POST['id'])) {
-
-        execute_query(
-            "UPDATE follow_ups
-     SET
-        client_id=?,
-        followup_date=?,
-        status=?,
-        notes=?,
-        platform=?,
-        assigned_to=?
-     WHERE id=?",
-            [
-                $clientId,
-                $date,
-                $status,
-                $notes,
-                $platform,
-                $assignedTo,
-                (int) $_POST['id']
-            ]
-        );
-
-    } else {
+   if (!empty($_POST['id'])) {
+    execute_query(
+        "UPDATE follow_ups
+         SET
+            client_id=?,
+            followup_date=?,
+            status=?,
+            notes=?,
+            platform=?,
+            assigned_to=?,
+            reminder_sent_at=NULL
+         WHERE id=?",
+        [
+            $clientId,
+            $date,
+            $status,
+            $notes,
+            $platform,
+            $assignedTo,
+            (int) $_POST['id']
+        ]
+    );
+} else {
 
         execute_query(
             "INSERT INTO follow_ups
@@ -155,23 +154,41 @@ $followups = fetch_all("
         CONCAT(c.first_name, ' ', c.last_name) AS client_name,
         co.company_name,
         u.name AS created_name,
-        au.name AS assigned_name
+        au.name AS assigned_name,
+
+        CASE
+            WHEN f.status = 'Pending' AND f.followup_date < NOW()
+                THEN 'Overdue'
+            WHEN f.status IS NULL OR TRIM(f.status) = ''
+                THEN 'Pending'
+            ELSE f.status
+        END AS display_status
+
     FROM follow_ups f
+
     INNER JOIN clients c
         ON c.id = f.client_id
+
     LEFT JOIN companies co
         ON co.id = c.company_id
+
     LEFT JOIN users u
         ON u.id = f.created_by
+
     LEFT JOIN users au
         ON au.id = f.assigned_to
 
     ORDER BY
         CASE
-            WHEN f.status = 'Overdue' THEN 1
-            WHEN f.status = 'Pending' THEN 2
-            WHEN f.status = 'Completed' THEN 3
-            WHEN f.status = 'Hold' THEN 4
+            WHEN f.status = 'Overdue'
+                OR (f.status = 'Pending' AND f.followup_date < NOW())
+                THEN 1
+            WHEN f.status = 'Pending'
+                THEN 2
+            WHEN f.status = 'Hold'
+                THEN 3
+            WHEN f.status = 'Completed'
+                THEN 4
             ELSE 5
         END ASC,
 
@@ -422,16 +439,14 @@ $users = fetch_all("SELECT id, name FROM users ORDER BY name");
 
                                     <td>
 
-                                      <?= date('d M, h:i A', strtotime($row['followup_date'])) ?>
+                                        <?= date('d M, h:i A', strtotime($row['followup_date'])) ?>
 
                                     </td>
 
                                     <td>
 
-                                        <span class="badge <?= status_badge_class($row['status']) ?>">
-
-                                            <?= esc($row['status']) ?>
-
+                                        <span class="badge <?= status_badge_class($row['display_status']) ?>">
+                                            <?= esc($row['display_status']) ?>
                                         </span>
 
                                     </td>

@@ -100,20 +100,34 @@ function upcoming_followups(int $limit = 5): array {
         FROM follow_ups f
         INNER JOIN clients c
             ON c.id = f.client_id
-        WHERE f.followup_date >= NOW()
-        ORDER BY f.followup_date ASC
+        WHERE
+            f.status = 'Overdue'
+            OR (
+                f.status = 'Pending'
+                AND f.followup_date >= NOW()
+            )
+        ORDER BY
+            CASE
+                WHEN f.status = 'Overdue' THEN 1
+                WHEN f.status = 'Pending' THEN 2
+                ELSE 3
+            END ASC,
+            f.followup_date ASC,
+            f.id ASC
         LIMIT {$limit}
     ");
-
 }
 function status_badge_class(string $status): string {
     return match ($status) {
         'Active', 'Completed', 'Qualified' => 'success',
         'Pending' => 'warning',
         'Overdue', 'Inactive' => 'danger',
+        'Hold' => 'info', 
         default => 'default',
     };
 }
+
+
 function page_title(): string { return $GLOBALS['pageTitle'] ?? 'Unire Portal'; }
 function page_description(): string { return $GLOBALS['pageDescription'] ?? 'Track clients, uploads, reminders and team activity in one place.'; }
 function active_nav(string $page): string { return basename($_SERVER['PHP_SELF']) === $page ? 'active' : ''; }

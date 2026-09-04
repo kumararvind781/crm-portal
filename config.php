@@ -2,7 +2,7 @@
 session_start();
 
 /* Base URL */
-if ($_SERVER['HTTP_HOST'] == 'localhost') {
+if (($_SERVER['HTTP_HOST'] ?? 'localhost') == 'localhost') {
 
     define('BASE_URL', '/crm-portal/');
 
