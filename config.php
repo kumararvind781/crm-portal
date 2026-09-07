@@ -1,30 +1,35 @@
+
 <?php
 
-if (PHP_SAPI !== 'cli') {
-    session_start();
-}
+if (PHP_SAPI === 'cli') {
 
-/* Base URL */
-if (($_SERVER['HTTP_HOST'] ?? 'localhost') == 'localhost') {
-
-    define('BASE_URL', '/crm-portal/');
-
-    // Local Database
-    define('DB_HOST', 'localhost');
-    define('DB_NAME', 'crm_portal');      // Your local DB name
-    define('DB_USER', 'root');            // XAMPP default
-    define('DB_PASS', '');                // Empty password
-
-} else {
-
+    // LIVE SERVER - CRON
     define('BASE_URL', '/');
 
-    // Live Database
     define('DB_HOST', 'localhost');
     define('DB_NAME', 'Unire_crm_portal');
     define('DB_USER', 'Unire_crm_portal');
     define('DB_PASS', '%~t6@$kDQtLfuS=S');
 
+} elseif (($_SERVER['HTTP_HOST'] ?? '') === 'localhost') {
+
+    // LOCAL WAMP
+    define('BASE_URL', '/crm-portal/');
+
+    define('DB_HOST', 'localhost');
+    define('DB_NAME', 'crm_portal');
+    define('DB_USER', 'root');
+    define('DB_PASS', '');
+
+} else {
+
+    // LIVE WEB
+    define('BASE_URL', '/');
+
+    define('DB_HOST', 'localhost');
+    define('DB_NAME', 'Unire_crm_portal');
+    define('DB_USER', 'Unire_crm_portal');
+    define('DB_PASS', '%~t6@$kDQtLfuS=S');
 }
 
 define('APP_NAME', 'CRM Portal');
