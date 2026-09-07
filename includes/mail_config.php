@@ -9,20 +9,37 @@
 |--------------------------------------------------------------------------
 */
 
+// return [
+
+//     'host'       => 'smtp.gmail.com',
+//     'port'       => 587,
+
+//     'username'   => 'arvindunire@gmail.com',
+//     'password'   => 'fqjkymdstdbsnyqd',
+
+//     'encryption' => 'tls',
+
+//     /*
+//     | Sender
+//     */
+//     'from_email' => 'arvindunire@gmail.com',
+//     'from_name'  => 'CRM Follow-up Reminder',
+
+// ];
+
+
+
 return [
 
-    'host'       => 'smtp.gmail.com',
-    'port'       => 587,
+    'host'       => 'sg2plzcpnl493864.prod.sin2.secureserver.net',
+    'port'       => 465,
 
-    'username'   => 'arvindunire@gmail.com',
-    'password'   => 'fqjkymdstdbsnyqd',
+    'username'   => 'crm@unire.in',
+    'password'   => '1$ZRrYlF=w&zda[w',
 
-    'encryption' => 'tls',
+    'encryption' => 'ssl',
 
-    /*
-    | Sender
-    */
-    'from_email' => 'arvindunire@gmail.com',
+    'from_email' => 'crm@unire.in',
     'from_name'  => 'CRM Follow-up Reminder',
 
 ];

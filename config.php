@@ -1,5 +1,8 @@
 <?php
-session_start();
+
+if (PHP_SAPI !== 'cli') {
+    session_start();
+}
 
 /* Base URL */
 if (($_SERVER['HTTP_HOST'] ?? 'localhost') == 'localhost') {

@@ -1,15 +1,23 @@
 <?php
 
-require_once __DIR__ . '/../includes/functions.php';
+/*
+ * Daily Follow-up Reminder Cron
+ *
+ * 1 day before: Pending/Hold
+ * Same day: Pending/Hold
+ * Overdue: Pending/Hold/Overdue once every day until Completed
+ *
+ * SMTP is loaded from includes/mail_config.php.
+ * Run with the server's CLI PHP:
+ * /usr/local/bin/php /home/vinaykalra/repositories/crm-portal/cron/followup_reminder.php
+ */
 
+require_once __DIR__ . '/../includes/functions.php';
 use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\Exception;
 
 require_once __DIR__ . '/../vendor/autoload.php';
-
 $mailConfig = require __DIR__ . '/../includes/mail_config.php';
-
-
 /*
 |--------------------------------------------------------------------------
 | LOAD CRM SETTINGS
@@ -31,9 +39,7 @@ $settingsRows = fetch_all("
         'timezone'
     )
 ");
-
 $settings = [];
-
 foreach ($settingsRows as $setting) {
     $settings[$setting['setting_key']] =
         $setting['setting_value'];
@@ -452,11 +458,13 @@ foreach ($followups as $row) {
         $mail->Password =
             $mailConfig['password'];
 
-        $mail->SMTPSecure =
-            PHPMailer::ENCRYPTION_STARTTLS;
+        $mail->Port = (int)($mailConfig['port'] ?? 587);
 
-        $mail->Port =
-            $mailConfig['port'];
+        if (($mailConfig['encryption'] ?? 'tls') === 'ssl' || $mail->Port === 465) {
+            $mail->SMTPSecure = PHPMailer::ENCRYPTION_SMTPS;
+        } else {
+            $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
+        }
 
 
         /*
