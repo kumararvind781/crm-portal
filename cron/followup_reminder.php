@@ -1,155 +1,81 @@
 <?php
-
 /*
  * Daily Follow-up Reminder Cron
- *
  * 1 day before: Pending/Hold
  * Same day: Pending/Hold
  * Overdue: Pending/Hold/Overdue once every day until Completed
- *
- * SMTP is loaded from includes/mail_config.php.
- * Run with the server's CLI PHP:
- * /usr/local/bin/php /home/vinaykalra/repositories/crm-portal/cron/followup_reminder.php
  */
 
 require_once __DIR__ . '/../includes/functions.php';
+
 use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\Exception;
 
 require_once __DIR__ . '/../vendor/autoload.php';
-$mailConfig = require __DIR__ . '/../includes/mail_config.php';
-/*
-|--------------------------------------------------------------------------
-| LOAD CRM SETTINGS
-|--------------------------------------------------------------------------
-*/
 
+$mailConfig = require __DIR__ . '/../includes/mail_config.php';
+
+/* Load CRM settings */
 $settingsRows = fetch_all("
-    SELECT
-        setting_key,
-        setting_value
+    SELECT setting_key, setting_value
     FROM crm_settings
     WHERE setting_key IN (
         'email_reminders',
         'reminder_1_day',
-        'reminder_2_hours',
+        'reminder_same_day',
         'reminder_overdue',
+        'reminder_from_email',
+        'reminder_from_name',
         'reminder_to_email',
         'reminder_cc_email',
         'timezone'
     )
 ");
+
 $settings = [];
 foreach ($settingsRows as $setting) {
-    $settings[$setting['setting_key']] =
-        $setting['setting_value'];
+    $settings[$setting['setting_key']] = $setting['setting_value'];
 }
 
-
-/*
-|--------------------------------------------------------------------------
-| SETTINGS
-|--------------------------------------------------------------------------
-*/
-
-$timezone =
-    $settings['timezone']
-    ?? 'Asia/Kolkata';
-
+$timezone = $settings['timezone'] ?? 'Asia/Kolkata';
 date_default_timezone_set($timezone);
 
+$emailReminders  = $settings['email_reminders'] ?? '1';
+$reminder1Day    = $settings['reminder_1_day'] ?? '1';
+$reminderSameDay = $settings['reminder_same_day'] ?? '1';
+$reminderOverdue = $settings['reminder_overdue'] ?? '1';
 
-/*
-|--------------------------------------------------------------------------
-| EMAIL SETTINGS FROM PORTAL
-|--------------------------------------------------------------------------
-*/
+$fromEmail = trim($settings['reminder_from_email']
+    ?? ($mailConfig['from_email'] ?? $mailConfig['username'] ?? ''));
 
-$emailReminders =
-    $settings['email_reminders']
-    ?? '1';
+$fromName = trim($settings['reminder_from_name']
+    ?? ($mailConfig['from_name'] ?? 'CRM Follow-up Reminder'));
 
-$reminder1Day =
-    $settings['reminder_1_day']
-    ?? '1';
+$toEmail = trim($settings['reminder_to_email'] ?? '');
+$ccEmail = trim($settings['reminder_cc_email'] ?? '');
 
-$reminder2Hours =
-    $settings['reminder_2_hours']
-    ?? '1';
-
-$reminderOverdue =
-    $settings['reminder_overdue']
-    ?? '1';
-
-
-$toEmail =
-    trim(
-        $settings['reminder_to_email']
-        ?? ''
-    );
-
-$ccEmail =
-    trim(
-        $settings['reminder_cc_email']
-        ?? ''
-    );
-
-
-/*
-|--------------------------------------------------------------------------
-| CHECK EMAIL REMINDER MASTER SWITCH
-|--------------------------------------------------------------------------
-*/
+echo "CRM Follow-up Reminder\n";
+echo "Time: " . date('d M Y h:i A') . "\n";
 
 if ($emailReminders !== '1') {
-
     echo "Email reminders are disabled.\n";
-
     exit;
 }
 
-
-/*
-|--------------------------------------------------------------------------
-| VALIDATE RECIPIENT
-|--------------------------------------------------------------------------
-*/
-
-if (
-    $toEmail === '' ||
-    !filter_var(
-        $toEmail,
-        FILTER_VALIDATE_EMAIL
-    )
-) {
-
+if ($toEmail === '' || !filter_var($toEmail, FILTER_VALIDATE_EMAIL)) {
     echo "Invalid or missing To Email in CRM Settings.\n";
-
     exit;
 }
 
+if ($fromEmail === '' || !filter_var($fromEmail, FILTER_VALIDATE_EMAIL)) {
+    echo "Invalid or missing From Email in CRM Settings.\n";
+    exit;
+}
 
 /*
-|--------------------------------------------------------------------------
-| FIND REMINDERS
-|--------------------------------------------------------------------------
-|
-| Pending / Hold:
-|
-|   1 Day Before
-|   2 Hours Before
-|
-| Overdue:
-|
-|   Once after follow-up time has passed
-|
-| Completed:
-|
-|   No reminder
-|
-*/
-
-
+ * Important:
+ * Cron runs once per day, so we check whole calendar dates.
+ */
 $followups = fetch_all("
     SELECT
         f.id,
@@ -158,697 +84,185 @@ $followups = fetch_all("
         f.status,
         f.notes,
         f.platform,
-
         f.reminder_1_sent_at,
-        f.reminder_2_sent_at,
+        f.reminder_same_day_sent_at,
         f.reminder_overdue_sent_at,
-
-        CONCAT(
-            c.first_name,
-            ' ',
-            c.last_name
-        ) AS client_name,
-
+        CONCAT(c.first_name, ' ', c.last_name) AS client_name,
         co.company_name
-
     FROM follow_ups f
-
-    INNER JOIN clients c
-        ON c.id = f.client_id
-
-    LEFT JOIN companies co
-        ON co.id = c.company_id
-
-    WHERE
-
-        /*
-        |--------------------------------------------------------------------------
-        | Pending / Hold
-        |--------------------------------------------------------------------------
-        */
-
-        (
-            f.status IN ('Pending', 'Hold')
-
-            AND
-
-            (
-
-                /*
-                | 1 DAY BEFORE
-                */
-
-                (
-                    f.followup_date <= DATE_ADD(
-                        NOW(),
-                        INTERVAL 24 HOUR
-                    )
-
-                    AND
-
-                    f.followup_date > DATE_ADD(
-                        NOW(),
-                        INTERVAL 19 HOUR
-                    )
-
-                    AND
-
-                    f.reminder_1_sent_at IS NULL
-                )
-
-                OR
-
-                /*
-                | 2 HOURS BEFORE
-                */
-
-                (
-                    f.followup_date <= DATE_ADD(
-                        NOW(),
-                        INTERVAL 2 HOUR
-                    )
-
-                    AND
-
-                    f.followup_date > DATE_ADD(
-                        NOW(),
-                        INTERVAL 1 HOUR
-                    )
-
-                    AND
-
-                    f.reminder_2_sent_at IS NULL
-                )
-
-                OR
-
-                /*
-                | OVERDUE
-                */
-
-                (
-                    f.followup_date <= NOW()
-
-                    AND
-
-                    f.reminder_overdue_sent_at IS NULL
-                )
-
-            )
-        )
-
-        OR
-
-        /*
-        |--------------------------------------------------------------------------
-        | Already marked Overdue
-        |--------------------------------------------------------------------------
-        */
-
-        (
-            f.status = 'Overdue'
-
-            AND
-
-            f.reminder_overdue_sent_at IS NULL
-        )
-
-    ORDER BY
-        f.followup_date ASC
+    INNER JOIN clients c ON c.id = f.client_id
+    LEFT JOIN companies co ON co.id = c.company_id
+    WHERE f.status IN ('Pending', 'Hold', 'Overdue')
+      AND (
+          DATE(f.followup_date) = DATE_ADD(CURDATE(), INTERVAL 1 DAY)
+          OR DATE(f.followup_date) = CURDATE()
+          OR DATE(f.followup_date) < CURDATE()
+      )
+    ORDER BY f.followup_date ASC, f.id ASC
 ");
 
+echo "Follow-ups checked: " . count($followups) . "\n";
 
-/*
-|--------------------------------------------------------------------------
-| PROCESS FOLLOW-UPS
-|--------------------------------------------------------------------------
-*/
+$sentCount = 0;
+$skipCount = 0;
+$errorCount = 0;
 
 foreach ($followups as $row) {
 
-
-    $now = time();
-
-    $followupTime =
-        strtotime(
-            $row['followup_date']
-        );
-
-
-    /*
-    |--------------------------------------------------------------------------
-    | Decide Reminder Type
-    |--------------------------------------------------------------------------
-    */
+    $followupDate = date('Y-m-d', strtotime($row['followup_date']));
+    $today = date('Y-m-d');
+    $tomorrow = date('Y-m-d', strtotime('+1 day'));
 
     $reminderType = null;
 
-
-    /*
-    |--------------------------------------------------------------------------
-    | 1 DAY BEFORE
-    |--------------------------------------------------------------------------
-    */
-
+    /* 1 day before */
     if (
         $reminder1Day === '1'
-
-        &&
-
-        in_array(
-            $row['status'],
-            ['Pending', 'Hold'],
-            true
-        )
-
-        &&
-
-        $followupTime > $now
-
-        &&
-
-        $followupTime <= (
-            $now + 24 * 60 * 60
-        )
-
-        &&
-
-        $followupTime > (
-            $now + 19 * 60 * 60
-        )
-
-        &&
-
-        empty(
-            $row['reminder_1_sent_at']
-        )
+        && in_array($row['status'], ['Pending', 'Hold'], true)
+        && $followupDate === $tomorrow
+        && empty($row['reminder_1_sent_at'])
     ) {
-
         $reminderType = '1_day';
     }
 
-
-    /*
-    |--------------------------------------------------------------------------
-    | 2 HOURS BEFORE
-    |--------------------------------------------------------------------------
-    */
-
+    /* Same day */
     elseif (
-        $reminder2Hours === '1'
-
-        &&
-
-        in_array(
-            $row['status'],
-            ['Pending', 'Hold'],
-            true
-        )
-
-        &&
-
-        $followupTime > $now
-
-        &&
-
-        $followupTime <= (
-            $now + 2 * 60 * 60
-        )
-
-        &&
-
-        $followupTime > (
-            $now + 1 * 60 * 60
-        )
-
-        &&
-
-        empty(
-            $row['reminder_2_sent_at']
-        )
+        $reminderSameDay === '1'
+        && in_array($row['status'], ['Pending', 'Hold'], true)
+        && $followupDate === $today
+        && empty($row['reminder_same_day_sent_at'])
     ) {
-
-        $reminderType = '2_hours';
+        $reminderType = 'same_day';
     }
 
-
-    /*
-    |--------------------------------------------------------------------------
-    | OVERDUE
-    |--------------------------------------------------------------------------
-    */
-
+    /* Daily overdue */
     elseif (
         $reminderOverdue === '1'
-
-        &&
-
-        $followupTime <= $now
-
-        &&
-
-        empty(
-            $row['reminder_overdue_sent_at']
+        && in_array($row['status'], ['Pending', 'Hold', 'Overdue'], true)
+        && $followupDate < $today
+        && (
+            empty($row['reminder_overdue_sent_at'])
+            || date('Y-m-d', strtotime($row['reminder_overdue_sent_at'])) < $today
         )
     ) {
-
         $reminderType = 'overdue';
     }
 
-
-    /*
-    |--------------------------------------------------------------------------
-    | Nothing to Send
-    |--------------------------------------------------------------------------
-    */
-
     if (!$reminderType) {
+        $skipCount++;
         continue;
     }
 
+    $clientName = trim($row['client_name'] ?? '') ?: 'Client';
+    $companyName = trim($row['company_name'] ?? '') ?: 'No Company';
 
-    /*
-    |--------------------------------------------------------------------------
-    | EMAIL
-    |--------------------------------------------------------------------------
-    */
+    $formattedFollowupDate = date(
+        'd M Y h:i A',
+        strtotime($row['followup_date'])
+    );
+
+    if ($reminderType === '1_day') {
+        $subject = "CRM Follow-up Reminder - Tomorrow - {$clientName}";
+        $messageTitle = "Follow-up Reminder - Tomorrow";
+        $messageText = "This follow-up is scheduled for tomorrow.";
+    } elseif ($reminderType === 'same_day') {
+        $subject = "CRM Follow-up Reminder - Today - {$clientName}";
+        $messageTitle = "Follow-up Reminder - Today";
+        $messageText = "This follow-up is scheduled for today.";
+    } else {
+        $subject = "CRM Follow-up OVERDUE - {$clientName}";
+        $messageTitle = "Follow-up OVERDUE";
+        $messageText = "This follow-up is overdue. A daily reminder will continue until it is completed.";
+    }
 
     $mail = new PHPMailer(true);
 
-
     try {
-
-
-        /*
-        |--------------------------------------------------------------------------
-        | SMTP
-        |--------------------------------------------------------------------------
-        */
-
         $mail->isSMTP();
-
-        $mail->Host =
-            $mailConfig['host'];
-
+        $mail->Host = $mailConfig['host'];
         $mail->SMTPAuth = true;
+        $mail->Username = $mailConfig['username'];
+        $mail->Password = $mailConfig['password'];
+        $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
+        $mail->Port = $mailConfig['port'];
 
-        $mail->Username =
-            $mailConfig['username'];
+        $mail->setFrom($fromEmail, $fromName);
+        $mail->addAddress($toEmail);
 
-        $mail->Password =
-            $mailConfig['password'];
-
-        $mail->Port = (int)($mailConfig['port'] ?? 587);
-
-        if (($mailConfig['encryption'] ?? 'tls') === 'ssl' || $mail->Port === 465) {
-            $mail->SMTPSecure = PHPMailer::ENCRYPTION_SMTPS;
-        } else {
-            $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
+        if ($ccEmail !== '' && filter_var($ccEmail, FILTER_VALIDATE_EMAIL)) {
+            $mail->addCC($ccEmail);
         }
-
-
-        /*
-        |--------------------------------------------------------------------------
-        | SENDER
-        |--------------------------------------------------------------------------
-        */
-
-        $mail->setFrom(
-            $mailConfig['from_email'],
-            $mailConfig['from_name']
-        );
-
-
-        /*
-        |--------------------------------------------------------------------------
-        | TO / CC FROM CRM SETTINGS
-        |--------------------------------------------------------------------------
-        */
-
-        $mail->addAddress(
-            $toEmail
-        );
-
-
-        if (
-            $ccEmail !== '' &&
-            filter_var(
-                $ccEmail,
-                FILTER_VALIDATE_EMAIL
-            )
-        ) {
-
-            $mail->addCC(
-                $ccEmail
-            );
-        }
-
-
-        /*
-        |--------------------------------------------------------------------------
-        | DATA
-        |--------------------------------------------------------------------------
-        */
-
-        $clientName =
-            $row['client_name']
-            ?: 'Client';
-
-        $companyName =
-            $row['company_name']
-            ?: 'No Company';
-
-
-        $followupDate =
-            date(
-                'd M Y h:i A',
-                $followupTime
-            );
-
-
-        /*
-        |--------------------------------------------------------------------------
-        | SUBJECT / MESSAGE
-        |--------------------------------------------------------------------------
-        */
-
-        if ($reminderType === '1_day') {
-
-            $subject =
-                "CRM Follow-up Reminder - 1 Day - {$clientName}";
-
-            $messageTitle =
-                "Follow-up Reminder - 1 Day Before";
-
-            $messageText =
-                "This follow-up is scheduled for tomorrow.";
-
-        }
-
-
-        elseif ($reminderType === '2_hours') {
-
-            $subject =
-                "CRM Follow-up Reminder - 2 Hours - {$clientName}";
-
-            $messageTitle =
-                "Follow-up Reminder - 2 Hours Before";
-
-            $messageText =
-                "This follow-up is scheduled in approximately 2 hours.";
-
-        }
-
-
-        else {
-
-            $subject =
-                "CRM Follow-up OVERDUE - {$clientName}";
-
-            $messageTitle =
-                "Follow-up OVERDUE";
-
-            $messageText =
-                "This follow-up time has already passed.";
-
-        }
-
-
-        /*
-        |--------------------------------------------------------------------------
-        | HTML EMAIL
-        |--------------------------------------------------------------------------
-        */
 
         $mail->isHTML(true);
+        $mail->Subject = $subject;
 
-        $mail->Subject =
-            $subject;
-
+        $safeTitle = htmlspecialchars($messageTitle, ENT_QUOTES, 'UTF-8');
+        $safeText = htmlspecialchars($messageText, ENT_QUOTES, 'UTF-8');
+        $safeClient = htmlspecialchars($clientName, ENT_QUOTES, 'UTF-8');
+        $safeCompany = htmlspecialchars($companyName, ENT_QUOTES, 'UTF-8');
+        $safeDate = htmlspecialchars($formattedFollowupDate, ENT_QUOTES, 'UTF-8');
+        $safeStatus = htmlspecialchars((string)$row['status'], ENT_QUOTES, 'UTF-8');
+        $safePlatform = htmlspecialchars((string)($row['platform'] ?? '-'), ENT_QUOTES, 'UTF-8');
+        $safeNotes = nl2br(
+            htmlspecialchars((string)($row['notes'] ?? '-'), ENT_QUOTES, 'UTF-8')
+        );
 
         $mail->Body = "
-
-            <div style='
-                font-family:Arial,sans-serif;
-                font-size:14px;
-                line-height:1.6;
-            '>
-
-                <h2>
-                    " .
-                    htmlspecialchars(
-                        $messageTitle
-                    )
-                    .
-                "
-                </h2>
-
-
-                <p>
-                    " .
-                    htmlspecialchars(
-                        $messageText
-                    )
-                    .
-                "
-                </p>
-
-
-                <table
-                    cellpadding='6'
-                    cellspacing='0'
-                    border='0'
-                >
-
-
-                    <tr>
-
-                        <td>
-                            <strong>Client</strong>
-                        </td>
-
-                        <td>
-                            " .
-                            htmlspecialchars(
-                                $clientName
-                            )
-                            .
-                        "
-                        </td>
-
-                    </tr>
-
-
-                    <tr>
-
-                        <td>
-                            <strong>Company</strong>
-                        </td>
-
-                        <td>
-                            " .
-                            htmlspecialchars(
-                                $companyName
-                            )
-                            .
-                        "
-                        </td>
-
-                    </tr>
-
-
-                    <tr>
-
-                        <td>
-                            <strong>
-                                Follow-up Date & Time
-                            </strong>
-                        </td>
-
-                        <td>
-                            " .
-                            htmlspecialchars(
-                                $followupDate
-                            )
-                            .
-                        "
-                        </td>
-
-                    </tr>
-
-
-                    <tr>
-
-                        <td>
-                            <strong>Status</strong>
-                        </td>
-
-                        <td>
-                            " .
-                            htmlspecialchars(
-                                $row['status']
-                            )
-                            .
-                        "
-                        </td>
-
-                    </tr>
-
-
-                    <tr>
-
-                        <td>
-                            <strong>Platform</strong>
-                        </td>
-
-                        <td>
-                            " .
-                            htmlspecialchars(
-                                $row['platform'] ?? '-'
-                            )
-                            .
-                        "
-                        </td>
-
-                    </tr>
-
-
-                    <tr>
-
-                        <td>
-                            <strong>Notes</strong>
-                        </td>
-
-                        <td>
-                            " .
-                            nl2br(
-                                htmlspecialchars(
-                                    $row['notes'] ?? '-'
-                                )
-                            )
-                            .
-                        "
-                        </td>
-
-                    </tr>
-
-
+            <div style='font-family:Arial,sans-serif;font-size:14px;line-height:1.6'>
+                <h2>{$safeTitle}</h2>
+                <p>{$safeText}</p>
+                <table cellpadding='6' cellspacing='0' border='0'>
+                    <tr><td><strong>Client</strong></td><td>{$safeClient}</td></tr>
+                    <tr><td><strong>Company</strong></td><td>{$safeCompany}</td></tr>
+                    <tr><td><strong>Follow-up Date &amp; Time</strong></td><td>{$safeDate}</td></tr>
+                    <tr><td><strong>Status</strong></td><td>{$safeStatus}</td></tr>
+                    <tr><td><strong>Platform</strong></td><td>{$safePlatform}</td></tr>
+                    <tr><td><strong>Notes</strong></td><td>{$safeNotes}</td></tr>
                 </table>
-
-
-                <p>
-                    Please check the CRM for complete
-                    follow-up details.
-                </p>
-
-
+                <p>Please check the CRM for complete follow-up details.</p>
             </div>
         ";
-
-
-        /*
-        |--------------------------------------------------------------------------
-        | PLAIN TEXT
-        |--------------------------------------------------------------------------
-        */
 
         $mail->AltBody =
             "{$messageTitle}\n\n" .
             "{$messageText}\n\n" .
             "Client: {$clientName}\n" .
             "Company: {$companyName}\n" .
-            "Follow-up: {$followupDate}\n" .
+            "Follow-up: {$formattedFollowupDate}\n" .
             "Status: {$row['status']}\n" .
-            "Platform: " .
-            ($row['platform'] ?? '-') .
-            "\n" .
-            "Notes: " .
-            ($row['notes'] ?? '-');
-
-
-        /*
-        |--------------------------------------------------------------------------
-        | SEND EMAIL
-        |--------------------------------------------------------------------------
-        */
+            "Platform: " . ($row['platform'] ?? '-') . "\n" .
+            "Notes: " . ($row['notes'] ?? '-');
 
         $mail->send();
 
-
-        /*
-        |--------------------------------------------------------------------------
-        | MARK REMINDER AS SENT
-        |--------------------------------------------------------------------------
-        */
-
         if ($reminderType === '1_day') {
-
             execute_query(
-                "UPDATE follow_ups
-                 SET reminder_1_sent_at = NOW()
-                 WHERE id = ?",
-                [
-                    (int)$row['id']
-                ]
+                "UPDATE follow_ups SET reminder_1_sent_at = NOW() WHERE id = ?",
+                [(int)$row['id']]
             );
+            echo "1-day reminder sent for follow-up #{$row['id']} to {$toEmail}\n";
 
+        } elseif ($reminderType === 'same_day') {
+            execute_query(
+                "UPDATE follow_ups SET reminder_same_day_sent_at = NOW() WHERE id = ?",
+                [(int)$row['id']]
+            );
+            echo "Same-day reminder sent for follow-up #{$row['id']} to {$toEmail}\n";
 
-            echo
-                "1-day reminder sent for follow-up #" .
-                $row['id'] .
-                " to {$toEmail}\n";
+        } else {
+            execute_query(
+                "UPDATE follow_ups SET reminder_overdue_sent_at = NOW() WHERE id = ?",
+                [(int)$row['id']]
+            );
+            echo "Daily overdue reminder sent for follow-up #{$row['id']} to {$toEmail}\n";
         }
 
+        $sentCount++;
 
-        elseif ($reminderType === '2_hours') {
-
-            execute_query(
-                "UPDATE follow_ups
-                 SET reminder_2_sent_at = NOW()
-                 WHERE id = ?",
-                [
-                    (int)$row['id']
-                ]
-            );
-
-
-            echo
-                "2-hour reminder sent for follow-up #" .
-                $row['id'] .
-                " to {$toEmail}\n";
-        }
-
-
-        elseif ($reminderType === 'overdue') {
-
-            execute_query(
-                "UPDATE follow_ups
-                 SET reminder_overdue_sent_at = NOW()
-                 WHERE id = ?",
-                [
-                    (int)$row['id']
-                ]
-            );
-
-
-            echo
-                "Overdue reminder sent for follow-up #" .
-                $row['id'] .
-                " to {$toEmail}\n";
-        }
-
-
+    } catch (Exception $e) {
+        $errorCount++;
+        echo "Failed for follow-up #{$row['id']}: {$mail->ErrorInfo}\n";
     }
-
-
-    catch (Exception $e) {
-
-        echo
-            "Failed for follow-up #" .
-            $row['id'] .
-            ": " .
-            $mail->ErrorInfo .
-            "\n";
-    }
-
 }
+
+echo "Done. Sent: {$sentCount}, Skipped: {$skipCount}, Errors: {$errorCount}\n";
