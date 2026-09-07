@@ -109,8 +109,8 @@ if (!preg_match('/^(?:[01]\d|2[0-3]):[0-5]\d$/', $sendTime)) {
 $cronSchedule = sprintf('%d %d * * *', $cronMinute, $cronHour);
 
 $cronCommand = $cronSchedule .
-    ' /usr/bin/php /home/user_name/Folder_path/cron/followup_reminder.php' .
-    ' >> /home/user_name/Folder_path/cron/followup_reminder.log 2>&1';
+    ' /usr/bin/php /home/vinaykalra/public_html/cron/followup_reminder.php' .
+    ' >> /home/vinaykalra/public_html/cron/followup_reminder.log 2>&1';
 
 include __DIR__ . '/../includes/header.php';
 include __DIR__ . '/../includes/sidebar.php';
@@ -280,7 +280,7 @@ include __DIR__ . '/../includes/sidebar.php';
                 </div>
 
                 <div class="form-group">
-                    <label>Cron Command</label>
+                    <label>GoDaddy / cPanel Cron Command</label>
                     <textarea id="cronCommand"
                               class="form-control"
                               rows="3"
