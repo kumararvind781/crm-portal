@@ -40,8 +40,8 @@ foreach ($settingsRows as $setting) {
 $timezone = $settings['timezone'] ?? 'Asia/Kolkata';
 date_default_timezone_set($timezone);
 
-$emailReminders  = $settings['email_reminders'] ?? '1';
-$reminder1Day    = $settings['reminder_1_day'] ?? '1';
+$emailReminders = $settings['email_reminders'] ?? '1';
+$reminder1Day = $settings['reminder_1_day'] ?? '1';
 $reminderSameDay = $settings['reminder_same_day'] ?? '1';
 $reminderOverdue = $settings['reminder_overdue'] ?? '1';
 
@@ -125,8 +125,7 @@ foreach ($followups as $row) {
         $reminderType = '1_day';
     }
 
-    /* Same day */
-    elseif (
+    /* Same day */ elseif (
         $reminderSameDay === '1'
         && in_array($row['status'], ['Pending', 'Hold'], true)
         && $followupDate === $today
@@ -135,8 +134,7 @@ foreach ($followups as $row) {
         $reminderType = 'same_day';
     }
 
-    /* Daily overdue */
-    elseif (
+    /* Daily overdue */ elseif (
         $reminderOverdue === '1'
         && in_array($row['status'], ['Pending', 'Hold', 'Overdue'], true)
         && $followupDate < $today
@@ -149,6 +147,8 @@ foreach ($followups as $row) {
     }
 
     if (!$reminderType) {
+
+        echo "Follow-up #{$row['id']} => Reminder Type: " . ($reminderType ?: 'SKIP') . "\n";
         $skipCount++;
         continue;
     }
@@ -183,8 +183,13 @@ foreach ($followups as $row) {
         $mail->SMTPAuth = true;
         $mail->Username = $mailConfig['username'];
         $mail->Password = $mailConfig['password'];
-        $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
-        $mail->Port = $mailConfig['port'];
+        $mail->Port = (int) ($mailConfig['port'] ?? 587);
+
+        if (($mailConfig['encryption'] ?? 'tls') === 'ssl' || $mail->Port === 465) {
+            $mail->SMTPSecure = PHPMailer::ENCRYPTION_SMTPS;
+        } else {
+            $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
+        }
 
         $mail->setFrom($fromEmail, $fromName);
         $mail->addAddress($toEmail);
@@ -201,10 +206,10 @@ foreach ($followups as $row) {
         $safeClient = htmlspecialchars($clientName, ENT_QUOTES, 'UTF-8');
         $safeCompany = htmlspecialchars($companyName, ENT_QUOTES, 'UTF-8');
         $safeDate = htmlspecialchars($formattedFollowupDate, ENT_QUOTES, 'UTF-8');
-        $safeStatus = htmlspecialchars((string)$row['status'], ENT_QUOTES, 'UTF-8');
-        $safePlatform = htmlspecialchars((string)($row['platform'] ?? '-'), ENT_QUOTES, 'UTF-8');
+        $safeStatus = htmlspecialchars((string) $row['status'], ENT_QUOTES, 'UTF-8');
+        $safePlatform = htmlspecialchars((string) ($row['platform'] ?? '-'), ENT_QUOTES, 'UTF-8');
         $safeNotes = nl2br(
-            htmlspecialchars((string)($row['notes'] ?? '-'), ENT_QUOTES, 'UTF-8')
+            htmlspecialchars((string) ($row['notes'] ?? '-'), ENT_QUOTES, 'UTF-8')
         );
 
         $mail->Body = "
@@ -238,21 +243,21 @@ foreach ($followups as $row) {
         if ($reminderType === '1_day') {
             execute_query(
                 "UPDATE follow_ups SET reminder_1_sent_at = NOW() WHERE id = ?",
-                [(int)$row['id']]
+                [(int) $row['id']]
             );
             echo "1-day reminder sent for follow-up #{$row['id']} to {$toEmail}\n";
 
         } elseif ($reminderType === 'same_day') {
             execute_query(
                 "UPDATE follow_ups SET reminder_same_day_sent_at = NOW() WHERE id = ?",
-                [(int)$row['id']]
+                [(int) $row['id']]
             );
             echo "Same-day reminder sent for follow-up #{$row['id']} to {$toEmail}\n";
 
         } else {
             execute_query(
                 "UPDATE follow_ups SET reminder_overdue_sent_at = NOW() WHERE id = ?",
-                [(int)$row['id']]
+                [(int) $row['id']]
             );
             echo "Daily overdue reminder sent for follow-up #{$row['id']} to {$toEmail}\n";
         }

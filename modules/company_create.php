@@ -49,24 +49,13 @@ include __DIR__ . '/../includes/sidebar.php';
 
                     <option value="">Select</option>
 
-                    <option>IT</option>
-
-                    <option>Manufacturing</option>
-
-                    <option>Education</option>
-
-                    <option>Healthcare</option>
-
-                    <option>Finance</option>
-
-                    <option>Retail</option>
-
-                    <option>Government</option>
-
-                    <option>Pharma</option>
-
-                    <option>Real Estate</option>
-
+                    <option>Travel Arrangements</option>
+                    <option>Hospitality</option>
+                    <option>Leisure, Travel and Tourism</option>
+                    <option>Destination Management Company</option>
+                    <option>Travel Technology</option>
+                    <option>Airlines</option>
+                    <option>Hotels or Resorts</option>
                     <option>Other</option>
 
                 </select>
@@ -153,151 +142,151 @@ include __DIR__ . '/../includes/sidebar.php';
 
             </div>
 
-             <div class="row">
+            <div class="row">
 
-                  <!-- Selected Tags -->
+                <!-- Selected Tags -->
 
-                        <?php
-                        $systems = fetch_all("SELECT system_name FROM master_systems ORDER BY system_name");
+                <?php
+                $systems = fetch_all("SELECT system_name FROM master_systems ORDER BY system_name");
+                ?>
+
+                <label>Systems Used</label>
+
+                <select id="system_select" class="form-control">
+                    <option value="">Select System</option>
+
+                    <?php foreach ($systems as $row) { ?>
+                        <option value="<?= esc($row['system_name']) ?>">
+                            <?= esc($row['system_name']) ?>
+                        </option>
+                    <?php } ?>
+
+                    <option value="Other">Other</option>
+                </select>
+
+                <div id="otherDiv" style="display:none;margin-top:10px;">
+                    <input type="text" id="otherSystem" class="form-control"
+                        placeholder="Enter new system and press Enter">
+                </div>
+
+                <input type="hidden" name="systems_used" id="systems_used">
+
+                <div id="selectedSystems" style="margin-top:10px;"></div>
+
+            </div>
+
+            <hr class="full">
+
+            <div class="section-title full">
+
+                Sales Information
+
+            </div>
+
+            <div>
+
+                <label>Prospect Level</label>
+
+                <select name="prospect">
+
+                    <option value="Hot">Hot</option>
+
+                    <option value="Warm" selected>Warm</option>
+
+                    <option value="Cold">Cold</option>
+
+                </select>
+
+            </div>
+
+            <div>
+
+                <label>Lead Source</label>
+
+                <select name="lead_source">
+
+                    <option>Reference</option>
+
+                    <option>Website</option>
+
+                    <option>Exhibition</option>
+
+                    <option>Cold Call</option>
+
+                    <option>LinkedIn</option>
+
+                    <option>Email</option>
+
+                    <option>Other</option>
+
+                </select>
+
+            </div>
+
+            <div>
+
+                <label>Assigned To</label>
+
+                <select name="assigned_to">
+
+                    <?php
+                    $users = fetch_all("SELECT id,name FROM users ORDER BY name");
+                    foreach ($users as $u) {
                         ?>
 
-                        <label>Systems Used</label>
+                        <option value="<?= $u['id'] ?>">
 
-                        <select id="system_select" class="form-control">
-                            <option value="">Select System</option>
+                            <?= esc($u['name']) ?>
 
-                            <?php foreach ($systems as $row) { ?>
-                                <option value="<?= esc($row['system_name']) ?>">
-                                    <?= esc($row['system_name']) ?>
-                                </option>
-                            <?php } ?>
+                        </option>
 
-                            <option value="Other">Other</option>
-                        </select>
+                    <?php } ?>
 
-                        <div id="otherDiv" style="display:none;margin-top:10px;">
-                            <input type="text" id="otherSystem" class="form-control"
-                                placeholder="Enter new system and press Enter">
-                        </div>
+                </select>
 
-                        <input type="hidden" name="systems_used" id="systems_used">
+            </div>
 
-                        <div id="selectedSystems" style="margin-top:10px;"></div>
+            <div>
 
-                 </div>
+                <label>Status</label>
 
-                <hr class="full">
+                <select name="status">
 
-                <div class="section-title full">
+                    <option value="Active">Active</option>
 
-                    Sales Information
+                    <option value="Pending">Pending</option>
 
-                </div>
+                    <option value="Inactive">Inactive</option>
 
-                <div>
+                </select>
 
-                    <label>Prospect Level</label>
+            </div>
 
-                    <select name="prospect">
+            <div class="full">
 
-                        <option value="Hot">Hot</option>
+                <label>Remarks</label>
 
-                        <option value="Warm" selected>Warm</option>
+                <textarea name="remarks" rows="5"></textarea>
 
-                        <option value="Cold">Cold</option>
+            </div>
 
-                    </select>
+            <div class="full form-actions">
 
-                </div>
+                <button class="btn btn-primary" type="submit">
 
-                <div>
+                    <i class="fa fa-save"></i>
 
-                    <label>Lead Source</label>
+                    Save Company
 
-                    <select name="lead_source">
+                </button>
 
-                        <option>Reference</option>
+                <a href="<?= BASE_URL ?>modules/company_list.php" class="btn btn-outline">
 
-                        <option>Website</option>
+                    Cancel
 
-                        <option>Exhibition</option>
+                </a>
 
-                        <option>Cold Call</option>
-
-                        <option>LinkedIn</option>
-
-                        <option>Email</option>
-
-                        <option>Other</option>
-
-                    </select>
-
-                </div>
-
-                <div>
-
-                    <label>Assigned To</label>
-
-                    <select name="assigned_to">
-
-                        <?php
-                        $users = fetch_all("SELECT id,name FROM users ORDER BY name");
-                        foreach ($users as $u) {
-                            ?>
-
-                            <option value="<?= $u['id'] ?>">
-
-                                <?= esc($u['name']) ?>
-
-                            </option>
-
-                        <?php } ?>
-
-                    </select>
-
-                </div>
-
-                <div>
-
-                    <label>Status</label>
-
-                    <select name="status">
-
-                        <option value="Active">Active</option>
-
-                        <option value="Pending">Pending</option>
-
-                        <option value="Inactive">Inactive</option>
-
-                    </select>
-
-                </div>
-
-                <div class="full">
-
-                    <label>Remarks</label>
-
-                    <textarea name="remarks" rows="5"></textarea>
-
-                </div>
-
-                <div class="full form-actions">
-
-                    <button class="btn btn-primary" type="submit">
-
-                        <i class="fa fa-save"></i>
-
-                        Save Company
-
-                    </button>
-
-                    <a href="<?= BASE_URL ?>modules/company_list.php" class="btn btn-outline">
-
-                        Cancel
-
-                    </a>
-
-                </div>
+            </div>
 
         </form>
 

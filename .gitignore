@@ -5,7 +5,7 @@
 
 # Database Connection
 config/db.php
-config/config.php
+config.php
 
 # SQL Backup Files
 database.sql
