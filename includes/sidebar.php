@@ -9,10 +9,7 @@
         <div class="brand">
 
             <div class="brand-logo">
-                <img
-                    src="<?= BASE_URL ?>assets/images/Unire-Business-Solutions-Pvt-Ltd.png"
-                    alt="Unire Logo"
-                >
+                <img src="<?= BASE_URL ?>assets/images/Unire-Business-Solutions-Pvt-Ltd.png" alt="Unire Logo">
             </div>
 
             <div class="brand-text">
@@ -37,30 +34,21 @@
 
 
         <!-- DASHBOARD -->
-        <a
-            href="<?= BASE_URL ?>index.php"
-            class="<?= active_nav('index.php') ?>"
-        >
+        <a href="<?= BASE_URL ?>index.php" class="<?= active_nav('index.php') ?>">
             <i class="fa-solid fa-table-cells-large"></i>
             <span>Dashboard</span>
         </a>
 
 
         <!-- COMPANIES -->
-        <a
-            href="<?= BASE_URL ?>modules/company_list.php"
-            class="<?= active_nav('company_list.php') ?>"
-        >
+        <a href="<?= BASE_URL ?>modules/company_list.php" class="<?= active_nav('company_list.php') ?>">
             <i class="fa-solid fa-building"></i>
             <span>Companies</span>
         </a>
 
 
         <!-- CLIENTS -->
-        <a
-            href="<?= BASE_URL ?>modules/clients.php"
-            class="<?= active_nav('clients.php') ?>"
-        >
+        <a href="<?= BASE_URL ?>modules/clients.php" class="<?= active_nav('clients.php') ?>">
             <i class="fa-solid fa-users"></i>
             <span>Clients</span>
         </a>
@@ -80,30 +68,21 @@
 
 
         <!-- FOLLOW-UP -->
-        <a
-            href="<?= BASE_URL ?>modules/followups.php"
-            class="<?= active_nav('followups.php') ?>"
-        >
+        <a href="<?= BASE_URL ?>modules/followups.php" class="<?= active_nav('followups.php') ?>">
             <i class="fa-regular fa-bell"></i>
             <span>Follow-up</span>
         </a>
 
 
         <!-- MEETINGS -->
-        <a
-            href="<?= BASE_URL ?>modules/meetings.php"
-            class="<?= active_nav('meetings.php') ?>"
-        >
+        <a href="<?= BASE_URL ?>modules/meetings.php" class="<?= active_nav('meetings.php') ?>">
             <i class="fa-solid fa-handshake"></i>
             <span>Meetings</span>
         </a>
 
 
         <!-- CALENDAR -->
-        <a
-            href="<?= BASE_URL ?>modules/calendar.php"
-            class="<?= active_nav('calendar.php') ?>"
-        >
+        <a href="<?= BASE_URL ?>modules/calendar.php" class="<?= active_nav('calendar.php') ?>">
             <i class="fa-regular fa-calendar-days"></i>
             <span>Calendar</span>
         </a>
@@ -111,10 +90,7 @@
 
         <!-- REPORTS -->
         <!-- All users -->
-        <a
-            href="<?= BASE_URL ?>modules/reports.php"
-            class="<?= active_nav('reports.php') ?>"
-        >
+        <a href="<?= BASE_URL ?>modules/reports.php" class="<?= active_nav('reports.php') ?>">
             <i class="fa-solid fa-chart-column"></i>
             <span>Reports</span>
         </a>
@@ -122,10 +98,7 @@
 
         <!-- SEARCH -->
         <!-- All users -->
-        <a
-            href="<?= BASE_URL ?>modules/search.php"
-            class="<?= active_nav('search.php') ?>"
-        >
+        <a href="<?= BASE_URL ?>modules/search.php" class="<?= active_nav('search.php') ?>">
             <i class="fa-solid fa-magnifying-glass"></i>
             <span>Search</span>
         </a>
@@ -139,22 +112,21 @@
 
 
             <!-- USERS -->
-            <a
-                href="<?= BASE_URL ?>modules/users.php"
-                class="<?= active_nav('users.php') ?>"
-            >
+            <a href="<?= BASE_URL ?>modules/users.php" class="<?= active_nav('users.php') ?>">
                 <i class="fa-regular fa-user"></i>
                 <span>Users</span>
             </a>
 
 
             <!-- SETTINGS -->
-            <a
-                href="<?= BASE_URL ?>modules/settings.php"
-                class="<?= active_nav('settings.php') ?>"
-            >
+            <a href="<?= BASE_URL ?>modules/settings.php" class="<?= active_nav('settings.php') ?>">
                 <i class="fa-solid fa-sliders"></i>
                 <span>Settings</span>
+            </a>
+
+            <a href="<?= BASE_URL ?>modules/addnew_master.php" class="<?= active_nav('addnew_master.php') ?>">
+                <i class="fa-solid fa-plus-circle"></i>
+                <span>Add New</span>
             </a>
 
 
@@ -163,10 +135,7 @@
 
         <!-- PROFILE -->
         <!-- All users -->
-        <a
-            href="<?= BASE_URL ?>modules/profile.php"
-            class="<?= active_nav('profile.php') ?>"
-        >
+        <a href="<?= BASE_URL ?>modules/profile.php" class="<?= active_nav('profile.php') ?>">
             <i class="fa-regular fa-circle-user"></i>
             <span>Profile</span>
         </a>

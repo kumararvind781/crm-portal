@@ -2,6 +2,8 @@
 require_once __DIR__ . '/../includes/functions.php';
 require_login();
 
+
+
 $id = (int) ($_GET['id'] ?? 0);
 if ($id <= 0) {
     $_SESSION['error'] = 'Invalid Company.';
@@ -16,8 +18,36 @@ if (!$company) {
     exit;
 }
 
-$pageTitle       = 'Edit Company';
+$pageTitle = 'Edit Company';
 $pageDescription = 'Update company information.';
+
+
+$industries = fetch_all("
+    SELECT industry_name
+    FROM industries
+    WHERE status = 1
+    ORDER BY industry_name ASC
+");
+
+$currentIndustry = trim((string) ($company['industry'] ?? ''));
+
+// Keep existing old industry visible even if it is not yet in master table
+if ($currentIndustry !== '') {
+    $industryExists = false;
+
+    foreach ($industries as $industry) {
+        if ($industry['industry_name'] === $currentIndustry) {
+            $industryExists = true;
+            break;
+        }
+    }
+
+    if (!$industryExists) {
+        array_unshift($industries, [
+            'industry_name' => $currentIndustry
+        ]);
+    }
+}
 
 // All systems (including manually added in past)
 $systems = fetch_all('SELECT system_name FROM master_systems ORDER BY system_name');
@@ -53,20 +83,40 @@ include __DIR__ . '/../includes/sidebar.php';
 
             <div>
                 <label>Company Name <span class="text-danger">*</span></label>
+
                 <input type="text" name="company_name" class="form-control" required
-                       value="<?= esc($company['company_name'] ?? ''); ?>">
+                    value="<?= esc($company['company_name'] ?? ''); ?>">
             </div>
 
+
             <div>
+
                 <label>Industry</label>
+
                 <select name="industry" class="form-control">
+
                     <option value="">Select Industry</option>
-                    <?php foreach (['IT', 'Manufacturing', 'Healthcare', 'Education', 'Finance', 'Retail', 'Government', 'Real Estate', 'Other'] as $item): ?>
-                        <option value="<?= esc($item); ?>" <?= (($company['industry'] ?? '') === $item) ? 'selected' : ''; ?>>
-                            <?= esc($item); ?>
+
+                    <?php foreach ($industries as $item): ?>
+
+                        <option value="<?= esc($item['industry_name']); ?>" <?= ($currentIndustry === $item['industry_name']) ? 'selected' : ''; ?>
+                            >
+                            <?= esc($item['industry_name']); ?>
                         </option>
+
                     <?php endforeach; ?>
+
                 </select>
+
+            </div>
+
+
+            <div class="full">
+
+                <label>Company Address</label>
+
+                <textarea name="address" rows="3" class="form-control"><?= esc($company['address'] ?? ''); ?></textarea>
+
             </div>
 
             <div class="full">
@@ -111,13 +161,13 @@ include __DIR__ . '/../includes/sidebar.php';
             <div>
                 <label>Company Email</label>
                 <input type="email" name="company_email" class="form-control"
-                       value="<?= esc($company['company_email'] ?? ''); ?>">
+                    value="<?= esc($company['company_email'] ?? ''); ?>">
             </div>
 
             <div>
                 <label>Company Phone</label>
                 <input type="text" name="company_phone" class="form-control"
-                       value="<?= esc($company['company_phone'] ?? ''); ?>">
+                    value="<?= esc($company['company_phone'] ?? ''); ?>">
             </div>
 
             <!-- Systems Used -->
@@ -141,7 +191,7 @@ include __DIR__ . '/../includes/sidebar.php';
 
                 <div id="addSystemDiv" style="display:none;margin-bottom:10px;">
                     <input type="text" id="addSystemInput" name="other_system" class="form-control"
-                           placeholder="Enter new system name">
+                        placeholder="Enter new system name">
                     <small style="display:block;margin-top:4px;color:#666;">
                         Type name and press Enter or click “Add New System”.
                     </small>
@@ -151,7 +201,7 @@ include __DIR__ . '/../includes/sidebar.php';
                 </div>
 
                 <input type="hidden" name="systems_used" id="systems_used"
-                       value="<?= esc(implode(',', $selectedSystems)); ?>">
+                    value="<?= esc(implode(',', $selectedSystems)); ?>">
 
                 <div id="selectedSystems" style="margin-top:10px;"></div>
             </div>
@@ -222,105 +272,105 @@ include __DIR__ . '/../includes/sidebar.php';
 </main>
 
 <script>
-document.addEventListener('DOMContentLoaded', function () {
-    const systemSelect     = document.getElementById('system_select');
-    const systemsInput     = document.getElementById('systems_used');
-    const selectedBox      = document.getElementById('selectedSystems');
-    const addSystemBtn     = document.getElementById('addSystemBtn');
-    const addSystemDiv     = document.getElementById('addSystemDiv');
-    const addSystemInput   = document.getElementById('addSystemInput');
-    const confirmAddSystem = document.getElementById('confirmAddSystem');
+    document.addEventListener('DOMContentLoaded', function () {
+        const systemSelect = document.getElementById('system_select');
+        const systemsInput = document.getElementById('systems_used');
+        const selectedBox = document.getElementById('selectedSystems');
+        const addSystemBtn = document.getElementById('addSystemBtn');
+        const addSystemDiv = document.getElementById('addSystemDiv');
+        const addSystemInput = document.getElementById('addSystemInput');
+        const confirmAddSystem = document.getElementById('confirmAddSystem');
 
-    let systems = systemsInput.value
-        .split(',')
-        .map(function (v) { return v.trim(); })
-        .filter(function (v) { return v !== ''; });
+        let systems = systemsInput.value
+            .split(',')
+            .map(function (v) { return v.trim(); })
+            .filter(function (v) { return v !== ''; });
 
-    systems = Array.from(new Set(systems));
+        systems = Array.from(new Set(systems));
 
-    function syncHidden() {
-        systemsInput.value = systems.join(',');
-    }
-
-    function renderTags() {
-        selectedBox.innerHTML = '';
-        systems.forEach(function (name) {
-            const tag = document.createElement('span');
-            tag.style.cssText =
-                'display:inline-flex;align-items:center;gap:6px;' +
-                'margin:4px;padding:6px 10px;border-radius:16px;' +
-                'background:#1677ff;color:#fff;font-size:13px;';
-
-            const text = document.createElement('span');
-            text.textContent = name;
-
-            const remove = document.createElement('button');
-            remove.type = 'button';
-            remove.textContent = '×';
-            remove.style.cssText =
-                'border:0;background:transparent;color:#fff;' +
-                'cursor:pointer;font-size:16px;line-height:1;';
-
-            remove.addEventListener('click', function () {
-                systems = systems.filter(function (item) {
-                    return item !== name;
-                });
-                syncHidden();
-                renderTags();
-            });
-
-            tag.appendChild(text);
-            tag.appendChild(remove);
-            selectedBox.appendChild(tag);
-        });
-    }
-
-    // Choose existing system from dropdown
-    systemSelect.addEventListener('change', function () {
-        const value = this.value.trim();
-        this.value = '';
-
-        if (!value) {
-            return;
+        function syncHidden() {
+            systemsInput.value = systems.join(',');
         }
 
-        if (!systems.includes(value)) {
-            systems.push(value);
+        function renderTags() {
+            selectedBox.innerHTML = '';
+            systems.forEach(function (name) {
+                const tag = document.createElement('span');
+                tag.style.cssText =
+                    'display:inline-flex;align-items:center;gap:6px;' +
+                    'margin:4px;padding:6px 10px;border-radius:16px;' +
+                    'background:#1677ff;color:#fff;font-size:13px;';
+
+                const text = document.createElement('span');
+                text.textContent = name;
+
+                const remove = document.createElement('button');
+                remove.type = 'button';
+                remove.textContent = '×';
+                remove.style.cssText =
+                    'border:0;background:transparent;color:#fff;' +
+                    'cursor:pointer;font-size:16px;line-height:1;';
+
+                remove.addEventListener('click', function () {
+                    systems = systems.filter(function (item) {
+                        return item !== name;
+                    });
+                    syncHidden();
+                    renderTags();
+                });
+
+                tag.appendChild(text);
+                tag.appendChild(remove);
+                selectedBox.appendChild(tag);
+            });
+        }
+
+        // Choose existing system from dropdown
+        systemSelect.addEventListener('change', function () {
+            const value = this.value.trim();
+            this.value = '';
+
+            if (!value) {
+                return;
+            }
+
+            if (!systems.includes(value)) {
+                systems.push(value);
+                syncHidden();
+                renderTags();
+            }
+        });
+
+        // Show add-system input
+        addSystemBtn.addEventListener('click', function () {
+            addSystemDiv.style.display = 'block';
+            addSystemInput.focus();
+        });
+
+        // Add new system name locally (for this company, and save.php will insert into DB)
+        function addNewSystemName() {
+            const value = addSystemInput.value.trim();
+            if (!value) {
+                return;
+            }
+
+            if (!systems.includes(value)) {
+                systems.push(value);
+            }
+
+            // IMPORTANT: send the new system to PHP via other_system field
+            const otherField = document.querySelector('input[name="other_system"]');
+            if (otherField) {
+                otherField.value = value;
+            }
+
+            addSystemInput.value = '';
+            addSystemDiv.style.display = 'none';
+
             syncHidden();
             renderTags();
         }
     });
-
-    // Show add-system input
-    addSystemBtn.addEventListener('click', function () {
-        addSystemDiv.style.display = 'block';
-        addSystemInput.focus();
-    });
-
-    // Add new system name locally (for this company, and save.php will insert into DB)
-function addNewSystemName() {
-    const value = addSystemInput.value.trim();
-    if (!value) {
-        return;
-    }
-
-    if (!systems.includes(value)) {
-        systems.push(value);
-    }
-
-    // IMPORTANT: send the new system to PHP via other_system field
-    const otherField = document.querySelector('input[name="other_system"]');
-    if (otherField) {
-        otherField.value = value;
-    }
-
-    addSystemInput.value  = '';
-    addSystemDiv.style.display = 'none';
-
-    syncHidden();
-    renderTags();
-} 
-});
 </script>
 
 <?php include __DIR__ . '/../includes/footer.php'; ?>

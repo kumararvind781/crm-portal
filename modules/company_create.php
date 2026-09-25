@@ -5,6 +5,16 @@ require_login();
 $pageTitle = "Add Company";
 $pageDescription = "Create a new company.";
 
+$industries = fetch_all("
+    SELECT industry_name
+    FROM industries
+    WHERE status = 1
+    ORDER BY industry_name ASC
+");
+
+$pageTitle = "Add Company";
+$pageDescription = "Create a new company.";
+
 include __DIR__ . '/../includes/header.php';
 include __DIR__ . '/../includes/sidebar.php';
 ?>
@@ -43,250 +53,247 @@ include __DIR__ . '/../includes/sidebar.php';
             </div>
 
             <div>
+
                 <label>Industry</label>
 
                 <select name="industry">
 
-                    <option value="">Select</option>
+                    <option value="">Select Industry</option>
 
-                    <option>Travel Arrangements</option>
-                    <option>Hospitality</option>
-                    <option>Leisure, Travel and Tourism</option>
-                    <option>Destination Management Company</option>
-                    <option>Travel Technology</option>
-                    <option>Airlines</option>
-                    <option>Hotels or Resorts</option>
-                    <option>Other</option>
-
-                </select>
-
-            </div>
-
-            <div class="full">
-
-                <label>Company Address</label>
-
-                <textarea name="address" rows="3"></textarea>
-
-            </div>
-
-            <div>
-
-                <label>City</label>
-
-                <input type="text" name="city">
-
-            </div>
-
-            <div>
-
-                <label>State</label>
-
-                <input type="text" name="state">
-
-            </div>
-
-            <div>
-
-                <label>Country</label>
-
-                <input type="text" name="country" value="India">
-
-            </div>
-
-            <div>
-
-                <label>Pincode</label>
-
-                <input type="text" name="pincode">
-
-            </div>
-
-            <hr class="full">
-
-            <div class="section-title full">
-
-                Business Information
-
-            </div>
-
-            <div>
-
-                <label>Website</label>
-
-                <input type="url" name="website" placeholder="https://">
-
-            </div>
-
-            <div>
-
-                <label>LinkedIn</label>
-
-                <input type="url" name="linkedin">
-
-            </div>
-
-            <div>
-
-                <label>Email</label>
-
-                <input type="email" name="company_email">
-
-            </div>
-
-            <div>
-
-                <label>Phone</label>
-
-                <input type="text" name="company_phone">
-
-            </div>
-
-            <div class="row">
-
-                <!-- Selected Tags -->
-
-                <?php
-                $systems = fetch_all("SELECT system_name FROM master_systems ORDER BY system_name");
-                ?>
-
-                <label>Systems Used</label>
-
-                <select id="system_select" class="form-control">
-                    <option value="">Select System</option>
-
-                    <?php foreach ($systems as $row) { ?>
-                        <option value="<?= esc($row['system_name']) ?>">
-                            <?= esc($row['system_name']) ?>
+                    <?php foreach ($industries as $item): ?>
+                        <option value="<?= esc($item['industry_name']) ?>">
+                            <?= esc($item['industry_name']) ?>
                         </option>
-                    <?php } ?>
+                    <?php endforeach; ?>
 
-                    <option value="Other">Other</option>
                 </select>
 
-                <div id="otherDiv" style="display:none;margin-top:10px;">
-                    <input type="text" id="otherSystem" class="form-control"
-                        placeholder="Enter new system and press Enter">
+                </div>
+                <div class="full">
+
+                    <label>Company Address</label>
+
+                    <textarea name="address" rows="3"></textarea>
+
                 </div>
 
-                <input type="hidden" name="systems_used" id="systems_used">
+                <div>
 
-                <div id="selectedSystems" style="margin-top:10px;"></div>
+                    <label>City</label>
 
-            </div>
+                    <input type="text" name="city">
 
-            <hr class="full">
+                </div>
 
-            <div class="section-title full">
+                <div>
 
-                Sales Information
+                    <label>State</label>
 
-            </div>
+                    <input type="text" name="state">
 
-            <div>
+                </div>
 
-                <label>Prospect Level</label>
+                <div>
 
-                <select name="prospect">
+                    <label>Country</label>
 
-                    <option value="Hot">Hot</option>
+                    <input type="text" name="country" value="India">
 
-                    <option value="Warm" selected>Warm</option>
+                </div>
 
-                    <option value="Cold">Cold</option>
+                <div>
 
-                </select>
+                    <label>Pincode</label>
 
-            </div>
+                    <input type="text" name="pincode">
 
-            <div>
+                </div>
 
-                <label>Lead Source</label>
+                <hr class="full">
 
-                <select name="lead_source">
+                <div class="section-title full">
 
-                    <option>Reference</option>
+                    Business Information
 
-                    <option>Website</option>
+                </div>
 
-                    <option>Exhibition</option>
+                <div>
 
-                    <option>Cold Call</option>
+                    <label>Website</label>
 
-                    <option>LinkedIn</option>
+                    <input type="url" name="website" placeholder="https://">
 
-                    <option>Email</option>
+                </div>
 
-                    <option>Other</option>
+                <div>
 
-                </select>
+                    <label>LinkedIn</label>
 
-            </div>
+                    <input type="url" name="linkedin">
 
-            <div>
+                </div>
 
-                <label>Assigned To</label>
+                <div>
 
-                <select name="assigned_to">
+                    <label>Email</label>
+
+                    <input type="email" name="company_email">
+
+                </div>
+
+                <div>
+
+                    <label>Phone</label>
+
+                    <input type="text" name="company_phone">
+
+                </div>
+
+                <div class="row">
+
+                    <!-- Selected Tags -->
 
                     <?php
-                    $users = fetch_all("SELECT id,name FROM users ORDER BY name");
-                    foreach ($users as $u) {
-                        ?>
+                    $systems = fetch_all("SELECT system_name FROM master_systems ORDER BY system_name");
+                    ?>
 
-                        <option value="<?= $u['id'] ?>">
+                    <label>Systems Used</label>
 
-                            <?= esc($u['name']) ?>
+                    <select id="system_select" class="form-control">
+                        <option value="">Select System</option>
 
-                        </option>
+                        <?php foreach ($systems as $row) { ?>
+                            <option value="<?= esc($row['system_name']) ?>">
+                                <?= esc($row['system_name']) ?>
+                            </option>
+                        <?php } ?>
 
-                    <?php } ?>
+                        <option value="Other">Other</option>
+                    </select>
 
-                </select>
+                    <div id="otherDiv" style="display:none;margin-top:10px;">
+                        <input type="text" id="otherSystem" class="form-control"
+                            placeholder="Enter new system and press Enter">
+                    </div>
 
-            </div>
+                    <input type="hidden" name="systems_used" id="systems_used">
 
-            <div>
+                    <div id="selectedSystems" style="margin-top:10px;"></div>
 
-                <label>Status</label>
+                </div>
 
-                <select name="status">
+                <hr class="full">
 
-                    <option value="Active">Active</option>
+                <div class="section-title full">
 
-                    <option value="Pending">Pending</option>
+                    Sales Information
 
-                    <option value="Inactive">Inactive</option>
+                </div>
 
-                </select>
+                <div>
 
-            </div>
+                    <label>Prospect Level</label>
 
-            <div class="full">
+                    <select name="prospect">
 
-                <label>Remarks</label>
+                        <option value="Hot">Hot</option>
 
-                <textarea name="remarks" rows="5"></textarea>
+                        <option value="Warm" selected>Warm</option>
 
-            </div>
+                        <option value="Cold">Cold</option>
 
-            <div class="full form-actions">
+                    </select>
 
-                <button class="btn btn-primary" type="submit">
+                </div>
 
-                    <i class="fa fa-save"></i>
+                <div>
 
-                    Save Company
+                    <label>Lead Source</label>
 
-                </button>
+                    <select name="lead_source">
 
-                <a href="<?= BASE_URL ?>modules/company_list.php" class="btn btn-outline">
+                        <option>Reference</option>
 
-                    Cancel
+                        <option>Website</option>
 
-                </a>
+                        <option>Exhibition</option>
 
-            </div>
+                        <option>Cold Call</option>
+
+                        <option>LinkedIn</option>
+
+                        <option>Email</option>
+
+                        <option>Other</option>
+
+                    </select>
+
+                </div>
+
+                <div>
+
+                    <label>Assigned To</label>
+
+                    <select name="assigned_to">
+
+                        <?php
+                        $users = fetch_all("SELECT id,name FROM users ORDER BY name");
+                        foreach ($users as $u) {
+                            ?>
+
+                            <option value="<?= $u['id'] ?>">
+
+                                <?= esc($u['name']) ?>
+
+                            </option>
+
+                        <?php } ?>
+
+                    </select>
+
+                </div>
+
+                <div>
+
+                    <label>Status</label>
+
+                    <select name="status">
+
+                        <option value="Active">Active</option>
+
+                        <option value="Pending">Pending</option>
+
+                        <option value="Inactive">Inactive</option>
+
+                    </select>
+
+                </div>
+
+                <div class="full">
+
+                    <label>Remarks</label>
+
+                    <textarea name="remarks" rows="5"></textarea>
+
+                </div>
+
+                <div class="full form-actions">
+
+                    <button class="btn btn-primary" type="submit">
+
+                        <i class="fa fa-save"></i>
+
+                        Save Company
+
+                    </button>
+
+                    <a href="<?= BASE_URL ?>modules/company_list.php" class="btn btn-outline">
+
+                        Cancel
+
+                    </a>
+
+                </div>
 
         </form>
 

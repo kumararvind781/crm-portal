@@ -1162,6 +1162,14 @@
                 "Comment": ""
             },
             {
+                "Field": "reminder_same_day_sent_at",
+                "Type": "datetime",
+                "Null": "YES",
+                "Default": null,
+                "Extra": "",
+                "Comment": ""
+            },
+            {
                 "Field": "reminder_2_sent_at",
                 "Type": "datetime",
                 "Null": "YES",
@@ -1212,7 +1220,7 @@
                 ]
             }
         ],
-        "create": "CREATE TABLE `follow_ups` (\n  `id` int NOT NULL AUTO_INCREMENT,\n  `client_id` int NOT NULL,\n  `company_id` int DEFAULT NULL,\n  `followup_date` datetime NOT NULL,\n  `status` enum('Pending','Completed','Overdue','Hold') COLLATE utf8mb4_unicode_ci DEFAULT 'Pending',\n  `notes` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,\n  `created_by` int DEFAULT NULL,\n  `assigned_to` int DEFAULT NULL,\n  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,\n  `platform` varchar(50) COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'Call',\n  `reminder_sent_at` datetime DEFAULT NULL,\n  `reminder_1_sent_at` datetime DEFAULT NULL,\n  `reminder_2_sent_at` datetime DEFAULT NULL,\n  `reminder_overdue_sent_at` datetime DEFAULT NULL,\n  `reminder_overdue_last_sent_at` datetime DEFAULT NULL,\n  PRIMARY KEY (`id`),\n  KEY `fk_follow_client` (`client_id`),\n  KEY `fk_follow_user` (`created_by`)\n) ENGINE=MyISAM AUTO_INCREMENT=28 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci"
+        "create": "CREATE TABLE `follow_ups` (\n  `id` int NOT NULL AUTO_INCREMENT,\n  `client_id` int NOT NULL,\n  `company_id` int DEFAULT NULL,\n  `followup_date` datetime NOT NULL,\n  `status` enum('Pending','Completed','Overdue','Hold') COLLATE utf8mb4_unicode_ci DEFAULT 'Pending',\n  `notes` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,\n  `created_by` int DEFAULT NULL,\n  `assigned_to` int DEFAULT NULL,\n  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,\n  `platform` varchar(50) COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'Call',\n  `reminder_sent_at` datetime DEFAULT NULL,\n  `reminder_1_sent_at` datetime DEFAULT NULL,\n  `reminder_same_day_sent_at` datetime DEFAULT NULL,\n  `reminder_2_sent_at` datetime DEFAULT NULL,\n  `reminder_overdue_sent_at` datetime DEFAULT NULL,\n  `reminder_overdue_last_sent_at` datetime DEFAULT NULL,\n  PRIMARY KEY (`id`),\n  KEY `fk_follow_client` (`client_id`),\n  KEY `fk_follow_user` (`created_by`)\n) ENGINE=MyISAM AUTO_INCREMENT=28 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci"
     },
     "followups": {
         "columns": [
