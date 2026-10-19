@@ -161,7 +161,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $_SESSION['reset_success'] =
                     'Admin password reset successfully.';
 
-                header('Location: ' . BASE_URL . 'auth/login.php');
+                header('Location: ' . BASE_URL . 'auth/login.php                                                                        ');
                 exit;
 
             } else {

@@ -50,7 +50,7 @@
         <!-- CLIENTS -->
         <a href="<?= BASE_URL ?>modules/clients.php" class="<?= active_nav('clients.php') ?>">
             <i class="fa-solid fa-users"></i>
-            <span>Clients</span>
+            <span>Interactions</span>
         </a>
 
 
@@ -74,11 +74,11 @@
         </a>
 
 
-        <!-- MEETINGS -->
+        <!-- MEETINGS
         <a href="<?= BASE_URL ?>modules/meetings.php" class="<?= active_nav('meetings.php') ?>">
             <i class="fa-solid fa-handshake"></i>
             <span>Meetings</span>
-        </a>
+        </a> -->
 
 
         <!-- CALENDAR -->

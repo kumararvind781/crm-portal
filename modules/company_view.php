@@ -109,6 +109,7 @@ $companyResponses = fetch_all("
         mr.communication_by,
         mr.response,
         mr.attachment,
+        mr.attachment_name,
         mr.created_at,
 
         c.first_name,
@@ -455,7 +456,7 @@ include __DIR__ . '/../includes/sidebar.php';
             </div>
         </div>
 
-        <div class="row g-4 mt-0">
+        <!-- <div class="row g-4 mt-0">
             <div class="col-lg-6">
                 <div class="card panel-card h-100">
                     <div class="card-header">
@@ -505,45 +506,39 @@ include __DIR__ . '/../includes/sidebar.php';
 
             <div class="col-lg-6">
                 <div class="card panel-card h-100">
-                    <div class="card-header">
-                        <h5 class="section-title"><i class="fa fa-bell text-danger me-2"></i>Follow-ups</h5>
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="section-title"><i class="fa fa-comments text-warning me-2"></i>Company Communication
+                            Responses</h5>
                     </div>
                     <div class="card-body">
-                        <?php if (empty($followups)): ?>
-                            <div class="text-muted">No follow-ups found.</div>
+                        <?php if (empty($communications)): ?>
+                            <div class="text-muted">No communication history.</div>
                         <?php else: ?>
-                            <div class="table-responsive">
-                                <table class="table table-sm soft-table table-hover align-middle mb-0">
-                                    <thead>
-                                        <tr>
-                                            <th>Date</th>
-                                            <th>Client</th>
-                                            <th>Status</th>
-                                            <th>Notes</th>
-                                            <th>Created By</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        <?php foreach ($followups as $row): ?>
-                                            <tr>
-                                                <td><?php echo !empty($row['followup_date']) ? date('d M Y h:i A', strtotime($row['followup_date'])) : '-'; ?>
-                                                </td>
-                                                <td><?php echo esc($row['client_name'] ?? '-'); ?></td>
-                                                <td><span
-                                                        class="badge <?php echo status_badge_class($row['status'] ?? 'Pending'); ?>"><?php echo esc($row['status'] ?? '-'); ?></span>
-                                                </td>
-                                                <td><?php echo nl2br(esc($row['notes'] ?? '-')); ?></td>
-                                                <td><?php echo esc($row['created_name'] ?? '-'); ?></td>
-                                            </tr>
-                                        <?php endforeach; ?>
-                                    </tbody>
-                                </table>
-                            </div>
+                            <?php foreach ($communications as $row): ?>
+                                <div class="timeline-item">
+                                    <div class="d-flex justify-content-between align-items-start">
+                                        <div>
+                                            <div class="fw-semibold">
+                                                <?php echo esc(ucfirst($row['communication_type'] ?? '-')); ?>
+                                            </div>
+                                            <div class="small text-muted">
+                                                <?php echo !empty($row['communication_date']) ? date('d M Y h:i A', strtotime($row['communication_date'])) : ''; ?>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="mt-2">
+                                        <?php echo nl2br(esc($row['communication'] ?? '')); ?>
+                                    </div>
+                                    <div class="mt-2 small text-muted">By
+                                        <?php echo esc($row['created_name'] ?? 'System'); ?>
+                                    </div>
+                                </div>
+                            <?php endforeach; ?>
                         <?php endif; ?>
                     </div>
                 </div>
             </div>
-        </div>
+        </div> -->
 
         <div class="row g-4 mt-0">
             <div class="col-lg-6">
@@ -593,33 +588,44 @@ include __DIR__ . '/../includes/sidebar.php';
                 </div>
             </div>
 
+
+
             <div class="col-lg-6">
                 <div class="card panel-card h-100">
-                    <div class="card-header d-flex justify-content-between align-items-center">
-                        <h5 class="section-title"><i class="fa fa-comments text-warning me-2"></i>Company Communication
-                            Responses</h5>
+                    <div class="card-header">
+                        <h5 class="section-title"><i class="fa fa-bell text-danger me-2"></i>Follow-ups</h5>
                     </div>
                     <div class="card-body">
-                        <?php if (empty($communications)): ?>
-                            <div class="text-muted">No communication history.</div>
+                        <?php if (empty($followups)): ?>
+                            <div class="text-muted">No follow-ups found.</div>
                         <?php else: ?>
-                            <?php foreach ($communications as $row): ?>
-                                <div class="timeline-item">
-                                    <div class="d-flex justify-content-between align-items-start">
-                                        <div>
-                                            <div class="fw-semibold">
-                                                <?php echo esc(ucfirst($row['communication_type'] ?? '-')); ?>
-                                            </div>
-                                            <div class="small text-muted">
-                                                <?php echo !empty($row['communication_date']) ? date('d M Y h:i A', strtotime($row['communication_date'])) : ''; ?>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="mt-2"><?php echo nl2br(esc($row['communication'] ?? '')); ?></div>
-                                    <div class="mt-2 small text-muted">By <?php echo esc($row['created_name'] ?? 'System'); ?>
-                                    </div>
-                                </div>
-                            <?php endforeach; ?>
+                            <div class="table-responsive">
+                                <table class="table table-sm soft-table table-hover align-middle mb-0">
+                                    <thead>
+                                        <tr>
+                                            <th>Date</th>
+                                            <th>Client</th>
+                                            <th>Status</th>
+                                            <th>Notes</th>
+                                            <th>Created By</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <?php foreach ($followups as $row): ?>
+                                            <tr>
+                                                <td><?php echo !empty($row['followup_date']) ? date('d M Y h:i A', strtotime($row['followup_date'])) : '-'; ?>
+                                                </td>
+                                                <td><?php echo esc($row['client_name'] ?? '-'); ?></td>
+                                                <td><span
+                                                        class="badge <?php echo status_badge_class($row['status'] ?? 'Pending'); ?>"><?php echo esc($row['status'] ?? '-'); ?></span>
+                                                </td>
+                                                <td><?php echo nl2br(esc($row['notes'] ?? '-')); ?></td>
+                                                <td><?php echo esc($row['created_name'] ?? '-'); ?></td>
+                                            </tr>
+                                        <?php endforeach; ?>
+                                    </tbody>
+                                </table>
+                            </div>
                         <?php endif; ?>
                     </div>
                 </div>
@@ -777,18 +783,61 @@ include __DIR__ . '/../includes/sidebar.php';
 
                                 <!-- ATTACHMENT -->
 
+
                                 <?php if (!empty($row['attachment'])): ?>
 
-                                    <div class="mt-3">
+                                    <?php
+                                    $displayName = !empty($row['attachment_name'])
+                                        ? $row['attachment_name']
+                                        : basename($row['attachment']);
 
-                                        <a href="<?= BASE_URL . esc($row['attachment']) ?>" target="_blank"
-                                            class="btn btn-sm btn-outline-primary">
+                                    $pdfUrl = BASE_URL . $row['attachment'];
+                                    ?>
 
-                                            <i class="fa fa-paperclip me-1"></i>
+                                    <div class="mt-3 p-3 rounded-3 border bg-light"
+                                        style="border-left: 5px solid #dc3545 !important;">
 
-                                            Attachment
+                                        <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
 
-                                        </a>
+                                            <!-- PDF DETAILS -->
+                                            <div class="d-flex align-items-center gap-3">
+
+                                                <div class="rounded-3 bg-white border p-3 text-danger">
+                                                    <i class="fas fa-file-pdf fa-2x"></i>
+                                                </div>
+
+                                                <div>
+                                                    <div class="fw-bold text-dark"
+                                                        style="font-size: 15px; overflow-wrap: anywhere;">
+                                                        <?= esc($displayName) ?>
+                                                    </div>
+
+                                                    <small class="text-muted">
+                                                        <i class="fas fa-paperclip me-1"></i>
+                                                        PDF Attachment
+                                                    </small>
+                                                </div>
+
+                                            </div>
+
+                                            <!-- ACTION BUTTONS -->
+                                            <div class="d-flex gap-2 flex-wrap">
+
+                                                <a href="<?= esc($pdfUrl) ?>" target="_blank" rel="noopener noreferrer"
+                                                    class="btn btn-sm btn-primary">
+                                                    <i class="fas fa-eye me-1"></i>
+                                                    View
+                                                </a>
+
+                                                <a href="<?= esc($pdfUrl) ?>" download="<?= esc($displayName) ?>"
+                                                    class="btn btn-sm btn-outline-secondary">
+                                                    <i class="fas fa-download me-1"></i>
+                                                    Download
+                                                </a>
+
+                                            </div>
+
+                                        </div>
 
                                     </div>
 

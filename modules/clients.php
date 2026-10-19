@@ -2,8 +2,8 @@
 require_once __DIR__ . '/../includes/functions.php';
 require_login();
 
-$pageTitle = 'Clients';
-$pageDescription = 'View basic client list and open full client details when needed.';
+$pageTitle = 'Interactions';
+$pageDescription = 'View basic Interaction list and open full Interaction details when needed.';
 
 if (isset($_GET['export']) && $_GET['export'] === 'csv') {
 
@@ -103,7 +103,7 @@ include __DIR__.'/../includes/sidebar.php';
 
 <div class="panel-header">
 
-<h3>All Clients</h3>
+<h3>All Interactions</h3>
 
 <div class="header-actions">
 
@@ -114,7 +114,7 @@ Export CSV
 
 <a class="btn btn-primary"
 href="<?=BASE_URL?>modules/client_create.php">
-Add Client
+Add Interaction
 </a>
 
 </div>

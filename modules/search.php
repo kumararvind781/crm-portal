@@ -4,7 +4,7 @@ require_once __DIR__ . '/../includes/functions.php';
 require_login();
 
 $pageTitle = 'Search';
-$pageDescription = 'Search clients and companies.';
+$pageDescription = 'Search Interactions and companies.';
 
 $q = trim($_GET['q'] ?? '');
 $results = [];
@@ -103,7 +103,7 @@ include __DIR__ . '/../includes/sidebar.php';
         <?php if ($q === ''): ?>
 
             <p class="placeholder-text">
-                Search by client name, company, location, phone, email,
+                Search by Interactions name, company, location, phone, email,
                 designation, industry, website, city, country, status,
                 notes, or any other client/company detail.
             </p>

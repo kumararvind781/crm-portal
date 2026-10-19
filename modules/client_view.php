@@ -789,72 +789,67 @@ margin-right:20px;
         ====================================================== -->
 
                 <form id="manualResponseForm" action="<?= BASE_URL ?>modules/manual_response_save.php" method="post"
-                    style="display:none;">
+                    enctype="multipart/form-data" style="display:none;">
 
                     <input type="hidden" name="client_id" value="<?= (int) $client['id'] ?>">
-
 
                     <div class="row">
 
                         <!-- COMMUNICATION BY -->
                         <div class="col-md-3">
-
                             <label class="form-label fw-semibold">
                                 Communication By
                             </label>
 
                             <select class="form-select" name="communication_by" required>
 
-                                <option value="">
-                                    Select
-                                </option>
+                                <option value="">Select</option>
 
-                                <!-- CLIENT -->
-                                <option value="Client">
-                                    Client
-                                </option>
+                                <option value="Client">Client</option>
 
-                                <!-- LOGGED-IN USER -->
                                 <option value="<?= esc($_SESSION['user']['name'] ?? '') ?>">
-
                                     <?= esc($_SESSION['user']['name'] ?? 'User') ?>
-
                                 </option>
 
                             </select>
-
                         </div>
-
 
                         <!-- RESPONSE -->
                         <div class="col-md-9">
-
                             <label class="form-label fw-semibold">
                                 Response
                             </label>
 
-                            <textarea class="form-control" name="response" rows="4" required></textarea>
+                            <textarea class="form-control" name="response" rows="4"></textarea>
+                        </div>
 
+                        <!-- PDF ATTACHMENT -->
+                        <div class="col-md-6 mt-3">
+                            <label for="attachment" class="form-label fw-semibold">
+                                <i class="fas fa-file-pdf text-danger me-1"></i>
+                                Upload PDF
+                            </label>
+
+                            <input type="file" name="attachment" id="attachment" class="form-control"
+                                accept=".pdf,application/pdf">
+
+                            <small class="text-muted">
+                                PDF only. Maximum file size: 10 MB.
+                            </small>
                         </div>
 
                     </div>
-
 
                     <!-- BUTTONS -->
                     <div class="mt-3">
 
                         <button class="btn btn-success" type="submit">
-
                             <i class="fas fa-save me-1"></i>
                             Save Response
-
                         </button>
 
-
                         <button class="btn btn-secondary" type="button" onclick="toggleManualResponse()">
-
                             Cancel
-
                         </button>
 
                     </div>
@@ -963,23 +958,66 @@ margin-right:20px;
 
                                 </div>
 
-
-                                <!-- ATTACHMENT -->
+                                
                                 <?php if (!empty($row['attachment'])): ?>
 
-                                    <div class="mt-3">
+                                    <?php
+                                    $displayName = !empty($row['attachment_name'])
+                                        ? $row['attachment_name']
+                                        : basename($row['attachment']);
 
-                                        <a href="<?= BASE_URL . esc($row['attachment']) ?>" target="_blank"
-                                            class="btn btn-sm btn-outline-primary">
+                                    $pdfUrl = BASE_URL . $row['attachment'];
+                                    ?>
 
-                                            <i class="fas fa-paperclip me-1"></i>
-                                            Attachment
+                                    <div class="mt-3 p-3 rounded-3 border bg-light"
+                                        style="border-left: 5px solid #dc3545 !important;">
 
-                                        </a>
+                                        <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+
+                                            <!-- PDF DETAILS -->
+                                            <div class="d-flex align-items-center gap-3">
+
+                                                <div class="rounded-3 bg-white border p-3 text-danger">
+                                                    <i class="fas fa-file-pdf fa-2x"></i>
+                                                </div>
+
+                                                <div>
+                                                    <div class="fw-bold text-dark"
+                                                        style="font-size: 15px; overflow-wrap: anywhere;">
+                                                        <?= esc($displayName) ?>
+                                                    </div>
+
+                                                    <small class="text-muted">
+                                                        <i class="fas fa-paperclip me-1"></i>
+                                                        PDF Attachment
+                                                    </small>
+                                                </div>
+
+                                            </div>
+
+                                            <!-- ACTION BUTTONS -->
+                                            <div class="d-flex gap-2 flex-wrap">
+
+                                                <a href="<?= esc($pdfUrl) ?>" target="_blank" rel="noopener noreferrer"
+                                                    class="btn btn-sm btn-primary">
+                                                    <i class="fas fa-eye me-1"></i>
+                                                    View
+                                                </a>
+
+                                                <a href="<?= esc($pdfUrl) ?>" download="<?= esc($displayName) ?>"
+                                                    class="btn btn-sm btn-outline-secondary">
+                                                    <i class="fas fa-download me-1"></i>
+                                                    Download
+                                                </a>
+
+                                            </div>
+
+                                        </div>
 
                                     </div>
 
                                 <?php endif; ?>
+                                
 
 
                                 <!-- CREATED BY -->

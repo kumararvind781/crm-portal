@@ -2,8 +2,8 @@
 require_once __DIR__ . '/../includes/functions.php';
 require_login();
 
-$pageTitle = 'Add Client';
-$pageDescription = 'Create or update a full client profile with contact and media details.';
+$pageTitle = 'Add Interaction';
+$pageDescription = 'Create or update a full Interaction profile with Interaction and media details.';
 
 $editId = (int) ($_GET['edit'] ?? 0);
 $client = $editId ? fetch_one('SELECT * FROM clients WHERE id = ?', [$editId]) : null;
@@ -250,11 +250,11 @@ include __DIR__ . '/../includes/sidebar.php';
         <div class="panel">
             <div class="panel-head p-4 p-lg-5 d-flex justify-content-between align-items-start flex-wrap gap-3">
                 <div>
-                    <div class="sub mb-1">Client Profile</div>
-                    <h2 class="fw-bold mb-1"><?php echo $client ? 'Edit Client' : 'Add New Client'; ?></h2>
-                    <div class="sub">Create or update a full client profile with contact and media details.</div>
+                    <div class="sub mb-1">Interaction Profile</div>
+                    <h2 class="fw-bold mb-1"><?php echo $client ? 'Edit Client' : 'Add New Interaction'; ?></h2>
+                    <div class="sub">Create or update a full Interaction profile with contact and media details.</div>
                 </div>
-                <a class="btn btn-light" href="<?php echo BASE_URL; ?>modules/clients.php">Back to Clients</a>
+                <a class="btn btn-light" href="<?php echo BASE_URL; ?>modules/clients.php">Back to Interactions</a>
             </div>
 
             <div class="form-card">
