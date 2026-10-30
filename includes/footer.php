@@ -139,6 +139,76 @@
         renderSelectedSystems();
     });
 </script>
+
+<style>
+    /* Disable text selection across CRM */
+    body {
+        -webkit-user-select: none;
+        -moz-user-select: none;
+        -ms-user-select: none;
+        user-select: none;
+    }
+
+    /* Keep form fields editable and selectable */
+    input,
+    textarea,
+    select,
+    [contenteditable="true"],
+    .allow-copy {
+        -webkit-user-select: text;
+        -moz-user-select: text;
+        -ms-user-select: text;
+        user-select: text;
+    }
+</style>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+
+        function isEditable(element) {
+            return element.closest(
+                'input, textarea, select, [contenteditable="true"], .allow-copy'
+            );
+        }
+
+        // Block Ctrl+C, Ctrl+X and Ctrl+V outside form fields
+        document.addEventListener('keydown', function (event) {
+            if ((event.ctrlKey || event.metaKey) &&
+                ['c', 'x', 'v'].includes(event.key.toLowerCase()) &&
+                !isEditable(event.target)) {
+                event.preventDefault();
+            }
+        });
+
+        // Block right-click outside form fields
+        document.addEventListener('contextmenu', function (event) {
+            if (!isEditable(event.target)) {
+                event.preventDefault();
+            }
+        });
+
+        // Block copy and cut outside form fields
+        document.addEventListener('copy', function (event) {
+            if (!isEditable(event.target)) {
+                event.preventDefault();
+            }
+        });
+
+        document.addEventListener('cut', function (event) {
+            if (!isEditable(event.target)) {
+                event.preventDefault();
+            }
+        });
+
+        // Block drag-to-copy
+        document.addEventListener('dragstart', function (event) {
+            if (!isEditable(event.target)) {
+                event.preventDefault();
+            }
+        });
+
+    });
+</script>
 </body>
 
 </html>

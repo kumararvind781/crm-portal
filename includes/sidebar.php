@@ -129,6 +129,13 @@
                 <span>Add New</span>
             </a>
 
+            <?php if (is_admin()): ?>
+                <a href="<?= BASE_URL ?>modules/activity_logs.php">
+                    <i class="fa fa-history"></i>
+                    <span>Activity Logs</span>
+                </a>
+            <?php endif; ?>
+
 
         <?php endif; ?>
 

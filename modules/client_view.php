@@ -114,8 +114,8 @@ if ($firstName == '' && $fullName != '') {
     $lastName = implode(' ', array_slice($parts, 1));
 }
 
-$pageTitle = 'Client Details';
-$pageDescription = 'View full client information';
+$pageTitle = 'Interaction Details';
+$pageDescription = 'View full Interaction information';
 
 include __DIR__ . '/../includes/header.php';
 include __DIR__ . '/../includes/sidebar.php';
@@ -204,7 +204,8 @@ margin-right:20px;
                         <a href="<?= BASE_URL ?>modules/client_create.php?edit=<?= $client['id'] ?>"
                             class="btn btn-primary">
 
-                            Edit Client
+                            Edit Interaction
+                        
 
                         </a>
 
@@ -226,7 +227,7 @@ margin-right:20px;
                     <div class="card-header bg-white">
                         <h5 class="mb-0">
                             <i class="fas fa-user me-2 text-primary"></i>
-                            Client Information
+                            Interaction Information
                         </h5>
                     </div>
 
@@ -805,7 +806,7 @@ margin-right:20px;
 
                                 <option value="">Select</option>
 
-                                <option value="Client">Client</option>
+                                <option value="Client">Interaction</option>
 
                                 <option value="<?= esc($_SESSION['user']['name'] ?? '') ?>">
                                     <?= esc($_SESSION['user']['name'] ?? 'User') ?>

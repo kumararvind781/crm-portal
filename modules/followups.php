@@ -1,6 +1,7 @@
 <?php
 
 require_once __DIR__ . '/../includes/functions.php';
+require_once __DIR__ . '/../includes/audit.php';
 require_login();
 
 $pageTitle = 'Follow-ups';
@@ -8,15 +9,44 @@ $pageDescription = 'Schedule, edit, and manage follow-up reminders.';
 
 /* ---------------- DELETE ---------------- */
 
+
+/* ---------------- DELETE ---------------- */
+
 if (isset($_GET['delete']) && is_admin()) {
 
-    execute_query(
-        "DELETE FROM follow_ups WHERE id=?",
-        [(int) $_GET['delete']]
+    $deleteId = (int)$_GET['delete'];
+
+    // Get follow-up details before deletion
+    $oldFollowup = fetch_one(
+        "SELECT id, client_id, status
+         FROM follow_ups
+         WHERE id = ?",
+        [$deleteId]
     );
+
+    if ($oldFollowup) {
+
+        $deleted = execute_query(
+            "DELETE FROM follow_ups WHERE id = ?",
+            [$deleteId]
+        );
+
+        if ($deleted) {
+            audit_log(
+                'DELETE',
+                'Follow-ups',
+                'Follow-up deleted',
+                'follow_up',
+                (string)$deleteId,
+                'Deleted follow-up for client ID: ' .
+                $oldFollowup['client_id']
+            );
+        }
+    }
 
     redirect_path('modules/followups.php');
 }
+
 
 
 /* ---------------- EDIT ---------------- */
@@ -40,9 +70,12 @@ if ($editId) {
 
 /* ---------------- SAVE ---------------- */
 
-if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
-    $clientId = (int) $_POST['client_id'];
+/* ---------------- SAVE ---------------- */
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+
+    $clientId = (int)($_POST['client_id'] ?? 0);
 
     $client = fetch_one(
         "SELECT company_id FROM clients WHERE id = ?",
@@ -50,55 +83,105 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     );
 
     $companyId = !empty($client['company_id'])
-        ? (int) $client['company_id']
+        ? (int)$client['company_id']
         : null;
 
-    $date = $_POST['followup_date'];
-
-    $status = trim($_POST['status']);
-
+    $date = $_POST['followup_date'] ?? '';
+    $status = trim($_POST['status'] ?? 'Pending');
     $platform = trim($_POST['platform'] ?? 'Call');
-    $assignedTo = (int) ($_POST['assigned_to'] ?? 0);
+    $assignedTo = (int)($_POST['assigned_to'] ?? 0);
+    $notes = trim($_POST['notes'] ?? '');
 
-    $notes = trim($_POST['notes']);
+    $id = (int)($_POST['id'] ?? 0);
 
-   if (!empty($_POST['id'])) {
-    execute_query(
-        "UPDATE follow_ups
-         SET
-            client_id=?,
-            followup_date=?,
-            status=?,
-            notes=?,
-            platform=?,
-            assigned_to=?,
-            reminder_sent_at=NULL
-         WHERE id=?",
-        [
-            $clientId,
-            $date,
-            $status,
-            $notes,
-            $platform,
-            $assignedTo,
-            (int) $_POST['id']
-        ]
-    );
-} else {
+    if ($id > 0) {
 
-        execute_query(
+        // Fetch OLD data before update
+        $oldFollowup = fetch_one(
+            "SELECT * FROM follow_ups WHERE id = ?",
+            [$id]
+        );
+
+        if (!$oldFollowup) {
+            $_SESSION['error'] = 'Follow-up not found.';
+            redirect_path('modules/followups.php');
+            exit;
+        }
+
+        // Update existing follow-up
+        $updated = execute_query(
+            "UPDATE follow_ups
+             SET
+                client_id = ?,
+                followup_date = ?,
+                status = ?,
+                notes = ?,
+                platform = ?,
+                assigned_to = ?,
+                reminder_sent_at = NULL
+             WHERE id = ?",
+            [
+                $clientId,
+                $date,
+                $status,
+                $notes,
+                $platform,
+                $assignedTo,
+                $id
+            ]
+        );
+
+        if ($updated) {
+
+            $changedFields = [];
+
+            $newValues = [
+                'client_id' => $clientId,
+                'followup_date' => $date,
+                'status' => $status,
+                'notes' => $notes,
+                'platform' => $platform,
+                'assigned_to' => $assignedTo
+            ];
+
+            foreach ($newValues as $field => $value) {
+                if (
+                    (string)($oldFollowup[$field] ?? '') !==
+                    (string)$value
+                ) {
+                    $changedFields[] = $field;
+                }
+            }
+
+            audit_log(
+                'UPDATE',
+                'Follow-ups',
+                'Follow-up updated',
+                'follow_up',
+                (string)$id,
+                'Changed fields: ' .
+                (empty($changedFields)
+                    ? 'No field changes'
+                    : implode(', ', $changedFields))
+            );
+        }
+
+    } else {
+
+        // Create new follow-up
+        $inserted = execute_query(
             "INSERT INTO follow_ups
-    (
-        client_id,
-        company_id,
-        followup_date,
-        status,
-        notes,
-        platform,
-        assigned_to,
-        created_by
-    )
-    VALUES (?,?,?,?,?,?,?,?)",
+            (
+                client_id,
+                company_id,
+                followup_date,
+                status,
+                notes,
+                platform,
+                assigned_to,
+                created_by
+            )
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
             [
                 $clientId,
                 $companyId,
@@ -107,15 +190,31 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 $notes,
                 $platform,
                 $assignedTo,
-                (int) $_SESSION['user']['id']
+                (int)$_SESSION['user']['id']
             ]
         );
 
+        if ($inserted) {
+
+            global $pdo;
+
+            $newFollowupId = (int)$pdo->lastInsertId();
+
+            audit_log(
+                'CREATE',
+                'Follow-ups',
+                'Follow-up created',
+                'follow_up',
+                (string)$newFollowupId,
+                'New follow-up created for client ID: ' . $clientId
+            );
+        }
     }
 
     redirect_path('modules/followups.php');
-
+    exit;
 }
+
 
 
 /* ---------------- CLIENT LIST ---------------- */

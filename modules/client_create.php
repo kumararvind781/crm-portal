@@ -1,5 +1,6 @@
 <?php
 require_once __DIR__ . '/../includes/functions.php';
+require_once __DIR__ . '/../includes/audit.php';
 require_login();
 
 $pageTitle = 'Add Interaction';
@@ -75,35 +76,40 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         trim($_POST['notes'] ?? '')
     ];
 
-    if ($id) {
+  
+if ($id) {
 
-        // Get the OLD company before changing it
-        $oldClient = fetch_one(
-            "SELECT company_id FROM clients WHERE id = ?",
-            [$id]
-        );
+    // Capture existing record before updating
+    $oldClient = fetch_one(
+        "SELECT * FROM clients WHERE id = ?",
+        [$id]
+    );
 
-        $oldCompanyId = !empty($oldClient['company_id'])
-            ? (int) $oldClient['company_id']
-            : null;
+    if (!$oldClient) {
+        die('Client record not found.');
+    }
 
-        // If company is being changed, save OLD company
-        if (
-            $oldCompanyId &&
-            $oldCompanyId !== $newCompanyId
-        ) {
-            execute_query(
-                "INSERT IGNORE INTO client_old_companies
+    $oldCompanyId = !empty($oldClient['company_id'])
+        ? (int)$oldClient['company_id']
+        : null;
+
+    // Preserve previous company history
+    if (
+        $oldCompanyId &&
+        $oldCompanyId !== $newCompanyId
+    ) {
+        execute_query(
+            "INSERT IGNORE INTO client_old_companies
              (client_id, company_id)
              VALUES (?, ?)",
-                [$id, $oldCompanyId]
-            );
-        }
+            [$id, $oldCompanyId]
+        );
+    }
 
-        $params[] = $id;
+    $params[] = $id;
 
-        execute_query(
-            'UPDATE clients SET
+    $updated = execute_query(
+        'UPDATE clients SET
             name=?,
             salutation=?,
             first_name=?,
@@ -130,13 +136,49 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             assigned_to=?,
             notes=?
          WHERE id=?',
-            $params
+        $params
+    );
+
+    if ($updated) {
+        $trackedFields = [
+            'name',
+            'designation',
+            'company_id',
+            'status',
+            'assigned_to'
+        ];
+
+        $changedFields = [];
+
+        foreach ($trackedFields as $field) {
+            if ((string)($oldClient[$field] ?? '') !==
+                (string)($field === 'company_id'
+                    ? ($newCompanyId ?? '')
+                    : ($field === 'name'
+                        ? $fullName
+                        : ($field === 'designation'
+                            ? $designation
+                            : ($field === 'status'
+                                ? trim($_POST['status'] ?? 'Active')
+                                : (int)($_POST['assigned_to'] ?? 0)))))) {
+                $changedFields[] = $field;
+            }
+        }
+
+        audit_log(
+            'UPDATE',
+            'Clients',
+            'Client updated',
+            'client',
+            (string)$id,
+            'Updated fields: ' . implode(', ', $changedFields)
         );
+    }
 
-    } else {
+} else {
 
-        execute_query(
-            'INSERT INTO clients
+    $inserted = execute_query(
+        'INSERT INTO clients
         (
             name,
             salutation,
@@ -167,8 +209,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         )
         VALUES
         (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())',
-            $params
+        $params
+    );
+
+    if ($inserted) {
+        $newClientId = (int)$pdo->lastInsertId();
+
+        audit_log(
+            'CREATE',
+            'Clients',
+            'Client created',
+            'client',
+            (string)$newClientId,
+            'New client interaction created'
         );
+    }
+
     }
 
     redirect_path('modules/clients.php');

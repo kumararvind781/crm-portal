@@ -35,11 +35,13 @@ return [
     'port'       => 465,
 
     'username'   => 'crm@unire.in',
-    'password'   => '1$ZRrYlF=w&zda[w',
+    'password'   => '4gK*7EHayPQKjpBT',
 
     'encryption' => 'ssl',
 
     'from_email' => 'crm@unire.in',
     'from_name'  => 'CRM Follow-up Reminder',
+'from_otp'  => 'CRM Login OTP',
+
 
 ];

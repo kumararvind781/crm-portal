@@ -1,4 +1,24 @@
-<?php require_once __DIR__ . '/functions.php'; require_login(); ?>
+<?php
+
+require_once __DIR__ . '/functions.php';
+require_once __DIR__ . '/audit.php';
+
+require_login();
+
+// Update the user's last activity time
+audit_touch();
+
+// Record the page visit
+audit_log(
+    'PAGE_VIEW',
+    'CRM',
+    'Page opened',
+    null,
+    null,
+    basename($_SERVER['PHP_SELF'])
+);
+
+?>
 <!doctype html>
 <html lang="en">
 <head>

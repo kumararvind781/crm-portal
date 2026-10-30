@@ -143,6 +143,14 @@
                 "Default": null,
                 "Extra": "on update CURRENT_TIMESTAMP",
                 "Comment": ""
+            },
+            {
+                "Field": "attachment_name",
+                "Type": "varchar(255)",
+                "Null": "YES",
+                "Default": null,
+                "Extra": "",
+                "Comment": ""
             }
         ],
         "indexes": [
@@ -171,7 +179,7 @@
                 ]
             }
         ],
-        "create": "CREATE TABLE `client_manual_responses` (\n  `id` int NOT NULL AUTO_INCREMENT,\n  `client_id` int NOT NULL,\n  `company_id` int DEFAULT NULL,\n  `communication_by` enum('Client','Unire') COLLATE utf8mb4_unicode_ci NOT NULL,\n  `response` text COLLATE utf8mb4_unicode_ci NOT NULL,\n  `attachment` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,\n  `created_by` int NOT NULL,\n  `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,\n  `updated_at` timestamp NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP,\n  PRIMARY KEY (`id`),\n  KEY `idx_client_id` (`client_id`),\n  KEY `idx_created_at` (`created_at`)\n) ENGINE=InnoDB AUTO_INCREMENT=22 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci"
+        "create": "CREATE TABLE `client_manual_responses` (\n  `id` int NOT NULL AUTO_INCREMENT,\n  `client_id` int NOT NULL,\n  `company_id` int DEFAULT NULL,\n  `communication_by` enum('Client','Unire') COLLATE utf8mb4_unicode_ci NOT NULL,\n  `response` text COLLATE utf8mb4_unicode_ci NOT NULL,\n  `attachment` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,\n  `created_by` int NOT NULL,\n  `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,\n  `updated_at` timestamp NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP,\n  `attachment_name` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,\n  PRIMARY KEY (`id`),\n  KEY `idx_client_id` (`client_id`),\n  KEY `idx_created_at` (`created_at`)\n) ENGINE=InnoDB AUTO_INCREMENT=28 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci"
     },
     "client_old_companies": {
         "columns": [
@@ -227,7 +235,7 @@
                 ]
             }
         ],
-        "create": "CREATE TABLE `client_old_companies` (\n  `id` int NOT NULL AUTO_INCREMENT,\n  `client_id` int NOT NULL,\n  `company_id` int NOT NULL,\n  `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,\n  PRIMARY KEY (`id`),\n  UNIQUE KEY `unique_client_company` (`client_id`,`company_id`)\n) ENGINE=MyISAM AUTO_INCREMENT=8 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci"
+        "create": "CREATE TABLE `client_old_companies` (\n  `id` int NOT NULL AUTO_INCREMENT,\n  `client_id` int NOT NULL,\n  `company_id` int NOT NULL,\n  `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,\n  PRIMARY KEY (`id`),\n  UNIQUE KEY `unique_client_company` (`client_id`,`company_id`)\n) ENGINE=MyISAM AUTO_INCREMENT=12 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci"
     },
     "clients": {
         "columns": [
@@ -490,7 +498,7 @@
                 ]
             }
         ],
-        "create": "CREATE TABLE `clients` (\n  `id` int NOT NULL AUTO_INCREMENT,\n  `name` varchar(120) COLLATE utf8mb4_unicode_ci NOT NULL,\n  `salutation` varchar(20) COLLATE utf8mb4_unicode_ci DEFAULT NULL,\n  `first_name` varchar(100) COLLATE utf8mb4_unicode_ci DEFAULT NULL,\n  `last_name` varchar(100) COLLATE utf8mb4_unicode_ci DEFAULT NULL,\n  `designation` varchar(150) COLLATE utf8mb4_unicode_ci DEFAULT NULL,\n  `person_address` text COLLATE utf8mb4_unicode_ci,\n  `company_id` int DEFAULT NULL,\n  `person_city` varchar(100) COLLATE utf8mb4_unicode_ci DEFAULT NULL,\n  `person_country` varchar(100) COLLATE utf8mb4_unicode_ci DEFAULT NULL,\n  `email_id` varchar(150) COLLATE utf8mb4_unicode_ci DEFAULT NULL,\n  `business_email` varchar(150) COLLATE utf8mb4_unicode_ci DEFAULT NULL,\n  `phone_number` varchar(30) COLLATE utf8mb4_unicode_ci DEFAULT NULL,\n  `business_phone` varchar(30) COLLATE utf8mb4_unicode_ci DEFAULT NULL,\n  `whatsapp_number` varchar(30) COLLATE utf8mb4_unicode_ci DEFAULT NULL,\n  `photo` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,\n  `linkedin_profile_url` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,\n  `visiting_card` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,\n  `events_met_at` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,\n  `referred_by_name` varchar(150) COLLATE utf8mb4_unicode_ci DEFAULT NULL,\n  `referred_by_company` varchar(150) COLLATE utf8mb4_unicode_ci DEFAULT NULL,\n  `referred_by_number` varchar(30) COLLATE utf8mb4_unicode_ci DEFAULT NULL,\n  `referred_by_email` varchar(150) COLLATE utf8mb4_unicode_ci DEFAULT NULL,\n  `company` varchar(150) COLLATE utf8mb4_unicode_ci NOT NULL,\n  `phone` varchar(30) COLLATE utf8mb4_unicode_ci NOT NULL,\n  `email` varchar(120) COLLATE utf8mb4_unicode_ci DEFAULT NULL,\n  `status` enum('Active','Pending','Qualified','Inactive') COLLATE utf8mb4_unicode_ci DEFAULT 'Active',\n  `assigned_to` int DEFAULT NULL,\n  `notes` text COLLATE utf8mb4_unicode_ci,\n  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,\n  PRIMARY KEY (`id`),\n  KEY `fk_client_user` (`assigned_to`)\n) ENGINE=MyISAM AUTO_INCREMENT=14 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci"
+        "create": "CREATE TABLE `clients` (\n  `id` int NOT NULL AUTO_INCREMENT,\n  `name` varchar(120) COLLATE utf8mb4_unicode_ci NOT NULL,\n  `salutation` varchar(20) COLLATE utf8mb4_unicode_ci DEFAULT NULL,\n  `first_name` varchar(100) COLLATE utf8mb4_unicode_ci DEFAULT NULL,\n  `last_name` varchar(100) COLLATE utf8mb4_unicode_ci DEFAULT NULL,\n  `designation` varchar(150) COLLATE utf8mb4_unicode_ci DEFAULT NULL,\n  `person_address` text COLLATE utf8mb4_unicode_ci,\n  `company_id` int DEFAULT NULL,\n  `person_city` varchar(100) COLLATE utf8mb4_unicode_ci DEFAULT NULL,\n  `person_country` varchar(100) COLLATE utf8mb4_unicode_ci DEFAULT NULL,\n  `email_id` varchar(150) COLLATE utf8mb4_unicode_ci DEFAULT NULL,\n  `business_email` varchar(150) COLLATE utf8mb4_unicode_ci DEFAULT NULL,\n  `phone_number` varchar(30) COLLATE utf8mb4_unicode_ci DEFAULT NULL,\n  `business_phone` varchar(30) COLLATE utf8mb4_unicode_ci DEFAULT NULL,\n  `whatsapp_number` varchar(30) COLLATE utf8mb4_unicode_ci DEFAULT NULL,\n  `photo` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,\n  `linkedin_profile_url` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,\n  `visiting_card` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,\n  `events_met_at` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,\n  `referred_by_name` varchar(150) COLLATE utf8mb4_unicode_ci DEFAULT NULL,\n  `referred_by_company` varchar(150) COLLATE utf8mb4_unicode_ci DEFAULT NULL,\n  `referred_by_number` varchar(30) COLLATE utf8mb4_unicode_ci DEFAULT NULL,\n  `referred_by_email` varchar(150) COLLATE utf8mb4_unicode_ci DEFAULT NULL,\n  `company` varchar(150) COLLATE utf8mb4_unicode_ci NOT NULL,\n  `phone` varchar(30) COLLATE utf8mb4_unicode_ci NOT NULL,\n  `email` varchar(120) COLLATE utf8mb4_unicode_ci DEFAULT NULL,\n  `status` enum('Active','Pending','Qualified','Inactive') COLLATE utf8mb4_unicode_ci DEFAULT 'Active',\n  `assigned_to` int DEFAULT NULL,\n  `notes` text COLLATE utf8mb4_unicode_ci,\n  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,\n  PRIMARY KEY (`id`),\n  KEY `fk_client_user` (`assigned_to`)\n) ENGINE=MyISAM AUTO_INCREMENT=15 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci"
     },
     "communications": {
         "columns": [
@@ -776,7 +784,7 @@
                 ]
             }
         ],
-        "create": "CREATE TABLE `companies` (\n  `id` int NOT NULL AUTO_INCREMENT,\n  `company_name` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,\n  `address` text COLLATE utf8mb4_unicode_ci,\n  `city` varchar(100) COLLATE utf8mb4_unicode_ci DEFAULT NULL,\n  `state` varchar(100) COLLATE utf8mb4_unicode_ci DEFAULT NULL,\n  `country` varchar(100) COLLATE utf8mb4_unicode_ci DEFAULT NULL,\n  `pincode` varchar(20) COLLATE utf8mb4_unicode_ci DEFAULT NULL,\n  `website` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,\n  `company_email` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,\n  `company_phone` varchar(50) COLLATE utf8mb4_unicode_ci DEFAULT NULL,\n  `linkedin` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,\n  `industry` varchar(100) COLLATE utf8mb4_unicode_ci DEFAULT NULL,\n  `systems_used` text COLLATE utf8mb4_unicode_ci,\n  `prospect` enum('Hot','Warm','Cold') COLLATE utf8mb4_unicode_ci DEFAULT 'Warm',\n  `lead_source` varchar(100) COLLATE utf8mb4_unicode_ci DEFAULT NULL,\n  `assigned_to` int DEFAULT NULL,\n  `status` enum('Active','Pending','Inactive') COLLATE utf8mb4_unicode_ci DEFAULT 'Active',\n  `remarks` text COLLATE utf8mb4_unicode_ci,\n  `created_by` int DEFAULT NULL,\n  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,\n  PRIMARY KEY (`id`)\n) ENGINE=MyISAM AUTO_INCREMENT=6 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci"
+        "create": "CREATE TABLE `companies` (\n  `id` int NOT NULL AUTO_INCREMENT,\n  `company_name` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,\n  `address` text COLLATE utf8mb4_unicode_ci,\n  `city` varchar(100) COLLATE utf8mb4_unicode_ci DEFAULT NULL,\n  `state` varchar(100) COLLATE utf8mb4_unicode_ci DEFAULT NULL,\n  `country` varchar(100) COLLATE utf8mb4_unicode_ci DEFAULT NULL,\n  `pincode` varchar(20) COLLATE utf8mb4_unicode_ci DEFAULT NULL,\n  `website` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,\n  `company_email` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,\n  `company_phone` varchar(50) COLLATE utf8mb4_unicode_ci DEFAULT NULL,\n  `linkedin` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,\n  `industry` varchar(100) COLLATE utf8mb4_unicode_ci DEFAULT NULL,\n  `systems_used` text COLLATE utf8mb4_unicode_ci,\n  `prospect` enum('Hot','Warm','Cold') COLLATE utf8mb4_unicode_ci DEFAULT 'Warm',\n  `lead_source` varchar(100) COLLATE utf8mb4_unicode_ci DEFAULT NULL,\n  `assigned_to` int DEFAULT NULL,\n  `status` enum('Active','Pending','Inactive') COLLATE utf8mb4_unicode_ci DEFAULT 'Active',\n  `remarks` text COLLATE utf8mb4_unicode_ci,\n  `created_by` int DEFAULT NULL,\n  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,\n  PRIMARY KEY (`id`)\n) ENGINE=MyISAM AUTO_INCREMENT=7 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci"
     },
     "contacts": {
         "columns": [
@@ -1220,7 +1228,7 @@
                 ]
             }
         ],
-        "create": "CREATE TABLE `follow_ups` (\n  `id` int NOT NULL AUTO_INCREMENT,\n  `client_id` int NOT NULL,\n  `company_id` int DEFAULT NULL,\n  `followup_date` datetime NOT NULL,\n  `status` enum('Pending','Completed','Overdue','Hold') COLLATE utf8mb4_unicode_ci DEFAULT 'Pending',\n  `notes` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,\n  `created_by` int DEFAULT NULL,\n  `assigned_to` int DEFAULT NULL,\n  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,\n  `platform` varchar(50) COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'Call',\n  `reminder_sent_at` datetime DEFAULT NULL,\n  `reminder_1_sent_at` datetime DEFAULT NULL,\n  `reminder_same_day_sent_at` datetime DEFAULT NULL,\n  `reminder_2_sent_at` datetime DEFAULT NULL,\n  `reminder_overdue_sent_at` datetime DEFAULT NULL,\n  `reminder_overdue_last_sent_at` datetime DEFAULT NULL,\n  PRIMARY KEY (`id`),\n  KEY `fk_follow_client` (`client_id`),\n  KEY `fk_follow_user` (`created_by`)\n) ENGINE=MyISAM AUTO_INCREMENT=28 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci"
+        "create": "CREATE TABLE `follow_ups` (\n  `id` int NOT NULL AUTO_INCREMENT,\n  `client_id` int NOT NULL,\n  `company_id` int DEFAULT NULL,\n  `followup_date` datetime NOT NULL,\n  `status` enum('Pending','Completed','Overdue','Hold') COLLATE utf8mb4_unicode_ci DEFAULT 'Pending',\n  `notes` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,\n  `created_by` int DEFAULT NULL,\n  `assigned_to` int DEFAULT NULL,\n  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,\n  `platform` varchar(50) COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'Call',\n  `reminder_sent_at` datetime DEFAULT NULL,\n  `reminder_1_sent_at` datetime DEFAULT NULL,\n  `reminder_same_day_sent_at` datetime DEFAULT NULL,\n  `reminder_2_sent_at` datetime DEFAULT NULL,\n  `reminder_overdue_sent_at` datetime DEFAULT NULL,\n  `reminder_overdue_last_sent_at` datetime DEFAULT NULL,\n  PRIMARY KEY (`id`),\n  KEY `fk_follow_client` (`client_id`),\n  KEY `fk_follow_user` (`created_by`)\n) ENGINE=MyISAM AUTO_INCREMENT=31 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci"
     },
     "followups": {
         "columns": [
@@ -1292,6 +1300,148 @@
             }
         ],
         "create": "CREATE TABLE `followups` (\n  `id` int NOT NULL AUTO_INCREMENT,\n  `communication_id` int DEFAULT NULL,\n  `followup_date` date DEFAULT NULL,\n  `followup_notes` text COLLATE utf8mb4_unicode_ci,\n  `assigned_to` int DEFAULT NULL,\n  `created_by` int DEFAULT NULL,\n  `status` enum('Pending','Completed','Cancelled') COLLATE utf8mb4_unicode_ci DEFAULT 'Pending',\n  PRIMARY KEY (`id`)\n) ENGINE=MyISAM DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci"
+    },
+    "industries": {
+        "columns": [
+            {
+                "Field": "id",
+                "Type": "int",
+                "Null": "NO",
+                "Default": null,
+                "Extra": "auto_increment",
+                "Comment": ""
+            },
+            {
+                "Field": "industry_name",
+                "Type": "varchar(150)",
+                "Null": "NO",
+                "Default": null,
+                "Extra": "",
+                "Comment": ""
+            },
+            {
+                "Field": "status",
+                "Type": "tinyint(1)",
+                "Null": "NO",
+                "Default": "1",
+                "Extra": "",
+                "Comment": ""
+            },
+            {
+                "Field": "created_at",
+                "Type": "timestamp",
+                "Null": "YES",
+                "Default": "CURRENT_TIMESTAMP",
+                "Extra": "DEFAULT_GENERATED",
+                "Comment": ""
+            }
+        ],
+        "indexes": [
+            {
+                "name": "PRIMARY",
+                "unique": true,
+                "type": "BTREE",
+                "columns": [
+                    "id"
+                ]
+            },
+            {
+                "name": "industry_name",
+                "unique": true,
+                "type": "BTREE",
+                "columns": [
+                    "industry_name"
+                ]
+            }
+        ],
+        "create": "CREATE TABLE `industries` (\n  `id` int NOT NULL AUTO_INCREMENT,\n  `industry_name` varchar(150) COLLATE utf8mb4_unicode_ci NOT NULL,\n  `status` tinyint(1) NOT NULL DEFAULT '1',\n  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,\n  PRIMARY KEY (`id`),\n  UNIQUE KEY `industry_name` (`industry_name`)\n) ENGINE=MyISAM AUTO_INCREMENT=12 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci"
+    },
+    "login_otps": {
+        "columns": [
+            {
+                "Field": "id",
+                "Type": "bigint unsigned",
+                "Null": "NO",
+                "Default": null,
+                "Extra": "auto_increment",
+                "Comment": ""
+            },
+            {
+                "Field": "user_id",
+                "Type": "int",
+                "Null": "NO",
+                "Default": null,
+                "Extra": "",
+                "Comment": ""
+            },
+            {
+                "Field": "otp_hash",
+                "Type": "varchar(255)",
+                "Null": "NO",
+                "Default": null,
+                "Extra": "",
+                "Comment": ""
+            },
+            {
+                "Field": "expires_at",
+                "Type": "datetime",
+                "Null": "NO",
+                "Default": null,
+                "Extra": "",
+                "Comment": ""
+            },
+            {
+                "Field": "attempts",
+                "Type": "tinyint unsigned",
+                "Null": "NO",
+                "Default": "0",
+                "Extra": "",
+                "Comment": ""
+            },
+            {
+                "Field": "used_at",
+                "Type": "datetime",
+                "Null": "YES",
+                "Default": null,
+                "Extra": "",
+                "Comment": ""
+            },
+            {
+                "Field": "created_at",
+                "Type": "datetime",
+                "Null": "YES",
+                "Default": "CURRENT_TIMESTAMP",
+                "Extra": "DEFAULT_GENERATED",
+                "Comment": ""
+            }
+        ],
+        "indexes": [
+            {
+                "name": "PRIMARY",
+                "unique": true,
+                "type": "BTREE",
+                "columns": [
+                    "id"
+                ]
+            },
+            {
+                "name": "idx_user_id",
+                "unique": false,
+                "type": "BTREE",
+                "columns": [
+                    "user_id"
+                ]
+            },
+            {
+                "name": "idx_created_at",
+                "unique": false,
+                "type": "BTREE",
+                "columns": [
+                    "created_at"
+                ]
+            }
+        ],
+        "create": "CREATE TABLE `login_otps` (\n  `id` bigint unsigned NOT NULL AUTO_INCREMENT,\n  `user_id` int NOT NULL,\n  `otp_hash` varchar(255) NOT NULL,\n  `expires_at` datetime NOT NULL,\n  `attempts` tinyint unsigned NOT NULL DEFAULT '0',\n  `used_at` datetime DEFAULT NULL,\n  `created_at` datetime DEFAULT CURRENT_TIMESTAMP,\n  PRIMARY KEY (`id`),\n  KEY `idx_user_id` (`user_id`),\n  KEY `idx_created_at` (`created_at`)\n) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci"
     },
     "master_systems": {
         "columns": [

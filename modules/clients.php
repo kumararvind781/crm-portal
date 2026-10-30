@@ -1,5 +1,6 @@
 <?php
 require_once __DIR__ . '/../includes/functions.php';
+require_once __DIR__ . '/../includes/audit.php';
 require_login();
 
 $pageTitle = 'Interactions';
