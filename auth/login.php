@@ -60,18 +60,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         exit('Invalid request. Please reload the page.');
     }
 
+
+
     /*
-    |--------------------------------------------------------------------------
-    | STEP 1: USERNAME AND PASSWORD
-    |--------------------------------------------------------------------------
-    */
+|--------------------------------------------------------------------------
+| STEP 1: USERNAME AND PASSWORD
+|--------------------------------------------------------------------------
+*/
 
     if (isset($_POST['submit_login'])) {
 
         // Do not allow another password submission during OTP verification.
         if (!empty($_SESSION['pending_login'])) {
+
             $otpStep = true;
             $error = 'Please complete the OTP verification first.';
+
         } else {
 
             $login = trim((string) ($_POST['login'] ?? ''));
@@ -83,11 +87,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             } else {
 
-                // Existing project database helper
                 $user = fetch_one(
                     "SELECT * FROM users
-                     WHERE email = ? OR name = ?
-                     LIMIT 1",
+                 WHERE email = ? OR name = ?
+                 LIMIT 1",
                     [$login, $login]
                 );
 
@@ -100,44 +103,68 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
                 } else {
 
-                    // Generate six-digit OTP
-                    $otp = (string) random_int(100000, 999999);
+                    // Check individual user OTP setting
+                    $otpEnabled = (int) ($user['otp_enabled'] ?? 1);
 
-                    // Send OTP to the fixed security mailbox
-                    $sent = send_security_otp(
-                        $otp,
-                        (string) ($user['name'] ?? 'CRM User')
-                    );
+                    // =====================================
+                    // OTP DISABLED: DIRECT LOGIN
+                    // =====================================
+                    if ($otpEnabled === 0) {
 
-                    if (!$sent) {
-
-                        $error = 'Unable to send OTP email. Please contact IT support.';
-
-                    } else {
-
-                        // Remove password hash from temporary session data
                         unset($user['password']);
 
-                        // Prevent session fixation
                         session_regenerate_id(true);
 
-                        // Store OTP securely in the session
-                        $_SESSION['pending_login'] = [
-                            'user' => $user,
-                            'otp_hash' => password_hash(
-                                $otp,
-                                PASSWORD_DEFAULT
-                            ),
-                            'expires' => time() + 300,
-                            'attempts' => 0
-                        ];
+                        $_SESSION['user'] = $user;
 
-                        // New CSRF token
+                        audit_login_success();
+
                         $_SESSION['login_csrf'] =
                             bin2hex(random_bytes(32));
 
-                        $otpStep = true;
-                        $error = '';
+                        header('Location: ' . BASE_URL . 'index.php');
+                        exit;
+
+                    } else {
+
+                        // =====================================
+                        // OTP ENABLED: SEND OTP
+                        // =====================================
+
+                        $otp = (string) random_int(100000, 999999);
+
+                        // Always send OTP to fixed security mailbox
+                        $sent = send_security_otp(
+                            $otp,
+                            (string) ($user['name'] ?? 'CRM User')
+                        );
+
+                        if (!$sent) {
+
+                            $error = 'Unable to send OTP email. Please contact IT support.';
+
+                        } else {
+
+                            unset($user['password']);
+
+                            session_regenerate_id(true);
+
+                            $_SESSION['pending_login'] = [
+                                'user' => $user,
+                                'otp_hash' => password_hash(
+                                    $otp,
+                                    PASSWORD_DEFAULT
+                                ),
+                                'expires' => time() + 300,
+                                'attempts' => 0
+                            ];
+
+                            $_SESSION['login_csrf'] =
+                                bin2hex(random_bytes(32));
+
+                            $otpStep = true;
+                            $error = '';
+                        }
                     }
                 }
             }
@@ -204,15 +231,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 // Regenerate session ID after authentication
                 session_regenerate_id(true);
 
-                // Preserve existing user fields except password
+                // Store authenticated user
                 $_SESSION['user'] = $user;
-                require_once __DIR__ . '/../includes/audit.php';
 
-                audit_login_success((int) $user['id']);
+                // Record login only once
                 audit_login_success();
 
-                $_SESSION['login_csrf'] =
-                    bin2hex(random_bytes(32));
+                // Generate new CSRF token
+                $_SESSION['login_csrf'] = bin2hex(random_bytes(32));
 
                 // Redirect to CRM dashboard
                 header('Location: ' . BASE_URL . 'index.php');
@@ -239,176 +265,187 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     <link rel="stylesheet" href="<?= BASE_URL ?>assets/css/style.css">
 
-    <style>
-        body.auth-body {
-            margin: 0;
-            font-family: Inter, sans-serif;
-            background: #eef6f1;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-        }
+    
+<style>
+    body.auth-body {
+        margin: 0;
+        font-family: Inter, sans-serif;
+        background: #eef6f1;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        min-height: 100vh;
+        padding: 20px 0;
+        box-sizing: border-box;
+    }
 
+    .login-box {
+        width: 540px;
+        max-width: calc(100% - 30px);
+        box-sizing: border-box;
+        background: #fff;
+        border-radius: 22px;
+        padding: 35px 42px;
+        box-shadow: 0 12px 35px rgba(0, 0, 0, .10);
+    }
+
+    .logo {
+        text-align: justify;
+        margin-bottom: 18px;
+    }
+
+    .logo img {
+        width: 100px;
+        max-width: 80%;
+    }
+
+    h1 {
+        text-align: center;
+        margin: 8px 0;
+        font-size: 32px;
+        font-weight: 800;
+        color: #1b2b34;
+    }
+
+    .subtitle {
+        text-align: center;
+        color: #666;
+        margin-bottom: 25px;
+        font-size: 16px;
+    }
+
+    .mb-3,
+    .mb-4 {
+        margin-bottom: 18px;
+    }
+
+    label {
+        display: block;
+        font-weight: 600;
+        margin-bottom: 8px;
+        font-size: 15px;
+    }
+
+    .form-control {
+        width: 100%;
+        height: 56px;
+        border: 1px solid #d9d9d9;
+        border-radius: 12px;
+        padding: 0 16px;
+        font-size: 16px;
+        box-sizing: border-box;
+        background: #eaf1fc;
+    }
+
+    .form-control:focus {
+        outline: none;
+        border-color: #218c5a;
+    }
+
+    .btn-login {
+        width: 100%;
+        height: 58px;
+        border: none;
+        border-radius: 12px;
+        background: #218c5a;
+        color: #fff;
+        font-size: 18px;
+        font-weight: 700;
+        cursor: pointer;
+    }
+
+    .btn-login:hover {
+        background: #1b754b;
+    }
+
+    .btn-reset {
+        display: block;
+        width: 100%;
+        height: 52px;
+        margin-top: 12px;
+        border: 1px solid #218c5a;
+        border-radius: 12px;
+        background: #fff;
+        color: #218c5a;
+        font-size: 17px;
+        font-weight: 700;
+        cursor: pointer;
+        text-align: center;
+        line-height: 52px;
+        text-decoration: none;
+        box-sizing: border-box;
+    }
+
+    .btn-reset:hover {
+        background: #eef6f1;
+    }
+
+    .alert {
+        padding: 12px 15px;
+        border-radius: 12px;
+        margin-bottom: 18px;
+        font-size: 14px;
+    }
+
+    .alert.error {
+        background: #ffe9e9;
+        color: #b50000;
+    }
+
+    .alert.success {
+        background: #e5f8eb;
+        color: #176b36;
+    }
+
+    .footer {
+        margin-top: 22px;
+        text-align: center;
+        color: #666;
+        font-size: 14px;
+    }
+
+    .otp-note {
+        color: #555;
+        text-align: center;
+        margin-bottom: 18px;
+        line-height: 1.6;
+        font-size: 14px;
+    }
+
+    @media (max-width: 600px) {
         .login-box {
-            width: 690px;
-            max-width: calc(100% - 30px);
-            box-sizing: border-box;
-            background: #fff;
-            border-radius: 30px;
-            padding: 55px 60px;
-            box-shadow: 0 15px 45px rgba(0, 0, 0, .12);
-        }
-
-        .logo {
-            text-align: center;
-            margin-bottom: 30px;
+            width: 100%;
+            padding: 28px 22px;
+            border-radius: 18px;
         }
 
         .logo img {
-            width: 340px;
-            max-width: 100%;
+            width: 220px;
         }
 
         h1 {
-            text-align: center;
-            margin: 10px 0;
-            font-size: 42px;
-            font-weight: 800;
-            color: #1b2b34;
+            font-size: 28px;
         }
 
         .subtitle {
-            text-align: center;
-            color: #666;
-            margin-bottom: 40px;
-            font-size: 20px;
-        }
-
-        .mb-3,
-        .mb-4 {
-            margin-bottom: 28px;
-        }
-
-        label {
-            display: block;
-            font-weight: 600;
-            margin-bottom: 12px;
-            font-size: 18px;
+            font-size: 14px;
+            margin-bottom: 22px;
         }
 
         .form-control {
-            width: 100%;
-            height: 84px;
-            border: 1px solid #d9d9d9;
-            border-radius: 20px;
-            padding: 0 25px;
-            font-size: 18px;
-            box-sizing: border-box;
-            background: #eaf1fc;
-        }
-
-        .form-control:focus {
-            outline: none;
-            border-color: #218c5a;
+            height: 52px;
         }
 
         .btn-login {
-            width: 100%;
-            height: 84px;
-            border: none;
-            border-radius: 20px;
-            background: #218c5a;
-            color: #fff;
-            font-size: 23px;
-            font-weight: 700;
-            cursor: pointer;
-        }
-
-        .btn-login:hover {
-            background: #1b754b;
-        }
-
-        .btn-reset {
-            display: block;
-            width: 100%;
-            height: 70px;
-            margin-top: 18px;
-            border: 1px solid #218c5a;
-            border-radius: 18px;
-            background: #fff;
-            color: #218c5a;
-            font-size: 22px;
-            font-weight: 700;
-            cursor: pointer;
-            text-align: center;
-            line-height: 70px;
-            text-decoration: none;
-            box-sizing: border-box;
-        }
-
-        .btn-reset:hover {
-            background: #eef6f1;
-        }
-
-        .alert {
-            padding: 18px;
-            border-radius: 16px;
-            margin-bottom: 25px;
-            font-size: 18px;
-        }
-
-        .alert.error {
-            background: #ffe9e9;
-            color: #b50000;
-        }
-
-        .alert.success {
-            background: #e5f8eb;
-            color: #176b36;
+            height: 54px;
         }
 
         .footer {
-            margin-top: 35px;
-            text-align: center;
-            color: #666;
-            font-size: 18px;
+            font-size: 13px;
         }
+    }
+</style>
 
-        .otp-note {
-            color: #555;
-            text-align: center;
-            margin-bottom: 25px;
-            line-height: 1.6;
-        }
-
-        @media (max-width: 600px) {
-
-            .login-box {
-                padding: 30px 22px;
-            }
-
-            h1 {
-                font-size: 34px;
-            }
-
-            .subtitle {
-                font-size: 16px;
-            }
-
-            .form-control {
-                height: 60px;
-            }
-
-            .btn-login {
-                height: 60px;
-            }
-
-            .footer {
-                font-size: 14px;
-            }
-        }
-    </style>
 
 </head>
 
@@ -423,7 +460,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <h1>CRM Portal</h1>
 
         <p class="subtitle">
-            Login to manage clients, follow-ups and uploads.
+           Manage companies, interactions, follow-ups, reports .
         </p>
 
         <?php if ($resetSuccess !== ''): ?>

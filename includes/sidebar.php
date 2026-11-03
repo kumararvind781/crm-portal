@@ -129,6 +129,11 @@
                 <span>Add New</span>
             </a>
 
+            <a href="<?= BASE_URL ?>modules/bulk_upload.php" class="<?= active_nav('bulk_upload.php') ?>">
+                <i class="fa-solid fa-file-excel"></i>
+                <span>Bulk Upload & Export</span>
+            </a>
+
             <?php if (is_admin()): ?>
                 <a href="<?= BASE_URL ?>modules/activity_logs.php">
                     <i class="fa fa-history"></i>
