@@ -7,6 +7,47 @@ require_admin();
 $pageTitle = 'Users';
 $pageDescription = 'Create, edit, and manage internal team accounts.';
 
+$fieldPermissionLabels = [
+    'client_name' => 'Client Name',
+    'client_designation' => 'Client Designation',
+    'client_company' => 'Client Company Name',
+    'client_location' => 'Client City / Country',
+    'client_status' => 'Client Status',
+    'client_assigned' => 'Assigned User',
+    'client_first_connected' => 'First Connected By',
+    'client_person_address' => 'Client Address',
+    'client_personal_email' => 'Personal Email',
+    'client_business_email' => 'Business Email',
+    'client_mobile' => 'Mobile Number',
+    'client_whatsapp' => 'WhatsApp Number',
+    'client_office_phone' => 'Office Telephone',
+    'client_linkedin' => 'LinkedIn Profile',
+    'client_referral' => 'Referral Details',
+    'client_notes' => 'Notes',
+    'client_photo' => 'Client Photo',
+    'client_visiting_card' => 'Visiting Card',
+    'client_events' => 'Event Information',
+    'company_name' => 'Company Name',
+    'company_industry' => 'Industry',
+    'company_website' => 'Website',
+    'company_email' => 'Company Email',
+    'company_phone' => 'Company Phone',
+    'company_linkedin' => 'Company LinkedIn',
+    'company_address' => 'Company Address',
+    'company_systems' => 'Systems Used',
+    'company_sales' => 'Sales Information',
+    'company_location' => 'City / State / Country / Pincode',
+    'company_contacts' => 'Company Contact List',
+    'company_meetings' => 'Meetings',
+    'company_followups' => 'Follow-ups',
+    'company_communications' => 'Communications',
+    'section_followup_history' => 'Follow-up History',
+    'section_manual_response' => 'Manual Response (including Add Response)',
+    'section_communication_timeline' => 'Communication Timeline',
+];
+$defaultTraineePermissions = ['client_name', 'client_designation', 'client_company', 'client_location', 'client_status', 'company_name', 'company_industry', 'company_location'];
+
+
 // Delete user
 if (isset($_GET['delete'])) {
     execute_query(
@@ -32,6 +73,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $name = trim($_POST['name'] ?? '');
     $email = trim($_POST['email'] ?? '');
     $role = trim($_POST['role'] ?? 'Executive');
+    $fieldPermissions = ($role === 'Trainee') ? array_values(array_intersect(array_keys($fieldPermissionLabels), (array)($_POST['field_permissions'] ?? []))) : [];
     $status = trim($_POST['status'] ?? 'Active');
     $otpEnabled = (int)($_POST['otp_enabled'] ?? 1);
 
@@ -40,7 +82,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if (!empty($_POST['password'])) {
             execute_query(
                 'UPDATE users
-                 SET name=?, email=?, password=?, role=?, status=?, otp_enabled=?
+                 SET name=?, email=?, password=?, role=?, status=?, otp_enabled=?, field_permissions=?
                  WHERE id=?',
                 [
                     $name,
@@ -49,13 +91,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $role,
                     $status,
                     $otpEnabled,
+                    json_encode($fieldPermissions),
                     $id
                 ]
             );
         } else {
             execute_query(
                 'UPDATE users
-                 SET name=?, email=?, role=?, status=?, otp_enabled=?
+                 SET name=?, email=?, role=?, status=?, otp_enabled=?, field_permissions=?
                  WHERE id=?',
                 [
                     $name,
@@ -63,6 +106,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $role,
                     $status,
                     $otpEnabled,
+                    json_encode($fieldPermissions),
                     $id
                 ]
             );
@@ -78,21 +122,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         execute_query(
             'INSERT INTO users
-             (name, email, password, role, status, otp_enabled)
-             VALUES (?, ?, ?, ?, ?, ?)',
+             (name, email, password, role, status, otp_enabled, field_permissions)
+             VALUES (?, ?, ?, ?, ?, ?, ?)',
             [
                 $name,
                 $email,
                 password_hash($_POST['password'], PASSWORD_DEFAULT),
                 $role,
                 $status,
-                $otpEnabled
+                $otpEnabled,
+                json_encode($fieldPermissions)
             ]
         );
     }
 
     redirect_path('modules/users.php');
 }
+
+$editPermissions = json_decode((string)($editUser['field_permissions'] ?? ''), true);
+if (!is_array($editPermissions)) $editPermissions = $defaultTraineePermissions;
 
 // User directory
 $users = fetch_all(
@@ -146,7 +194,7 @@ include __DIR__ . '/../includes/sidebar.php';
                 <div>
                     <label>Role</label>
                     <select name="role">
-                        <?php foreach (['Super Admin', 'Manager', 'Executive'] as $r): ?>
+                        <?php foreach (['Super Admin', 'Manager', 'Executive', 'Trainee'] as $r): ?>
                             <option value="<?= esc($r) ?>"
                                 <?= (($editUser['role'] ?? 'Executive') === $r) ? 'selected' : '' ?>>
                                 <?= esc($r) ?>
@@ -154,6 +202,57 @@ include __DIR__ . '/../includes/sidebar.php';
                         <?php endforeach; ?>
                     </select>
                 </div>
+
+                <div id="traineePermissions" style="grid-column:1/-1; border:1px solid #dbe2ea; border-radius:12px; padding:16px; <?= (($editUser['role'] ?? '') === 'Trainee') ? '' : 'display:none;' ?>">
+                    <h4 style="margin:0 0 12px;">Trainee Field Permissions</h4>
+                    <small>Select which client fields, company fields and client profile sections this user can view.</small>
+                    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px;margin-top:14px;">
+                        <div>
+                            <strong>Client Details</strong>
+                            <?php foreach ($fieldPermissionLabels as $key => $label): ?>
+                                <?php if (str_starts_with($key, 'client_')): ?>
+                                    <label style="display:block;font-weight:400;margin:7px 0;">
+                                        <input type="checkbox" name="field_permissions[]" value="<?= esc($key) ?>" <?= in_array($key, $editPermissions, true) ? 'checked' : '' ?>>
+                                        <?= esc($label) ?>
+                                    </label>
+                                <?php endif; ?>
+                            <?php endforeach; ?>
+                        </div>
+                        <div>
+                            <strong>Company Details</strong>
+                            <?php foreach ($fieldPermissionLabels as $key => $label): ?>
+                                <?php if (str_starts_with($key, 'company_')): ?>
+                                    <label style="display:block;font-weight:400;margin:7px 0;">
+                                        <input type="checkbox" name="field_permissions[]" value="<?= esc($key) ?>" <?= in_array($key, $editPermissions, true) ? 'checked' : '' ?>>
+                                        <?= esc($label) ?>
+                                    </label>
+                                <?php endif; ?>
+                            <?php endforeach; ?>
+                        </div>
+                        <div>
+                            <strong>Client Profile Sections</strong>
+                            <?php foreach ($fieldPermissionLabels as $key => $label): ?>
+                                <?php if (str_starts_with($key, 'section_')): ?>
+                                    <label style="display:block;font-weight:400;margin:7px 0;">
+                                        <input type="checkbox" name="field_permissions[]" value="<?= esc($key) ?>" <?= in_array($key, $editPermissions, true) ? 'checked' : '' ?>>
+                                        <?= esc($label) ?>
+                                    </label>
+                                <?php endif; ?>
+                            <?php endforeach; ?>
+                        </div>
+                    </div>
+                </div>
+                <script>
+                document.addEventListener('DOMContentLoaded', function () {
+                    const roleSelect = document.querySelector('select[name="role"]');
+                    const permissionBox = document.getElementById('traineePermissions');
+                    function togglePermissions() {
+                        permissionBox.style.display = roleSelect.value === 'Trainee' ? 'block' : 'none';
+                    }
+                    roleSelect.addEventListener('change', togglePermissions);
+                    togglePermissions();
+                });
+                </script>
 
                 <div>
                     <label>Status</label>

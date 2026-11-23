@@ -7,71 +7,62 @@ $pageDescription = "Manage company master records.";
 
 $search = trim($_GET['search'] ?? '');
 
-/*
-|--------------------------------------------------------------------------
-| Company List Query
-| Contacts count matches company_view.php logic
-|--------------------------------------------------------------------------
-*/
+$showCompanyName = can_view_field('company_name');
+$showCompanyLocation = can_view_field('company_location');
+$showIndustry = can_view_field('company_industry');
+$showWebsite = can_view_field('company_website');
+$showContacts = can_view_field('company_contacts');
+$showPending = can_view_field('company_followups');
+$hasAnyCompanyVisibility = $showCompanyName || $showCompanyLocation || $showIndustry
+    || $showWebsite || $showContacts || $showPending;
+
+// Build search predicates only from fields this account may view.
+// This avoids leaking hidden values through search-result existence.
+$whereParts = [];
+$params = [];
+if ($search !== '') {
+    $term = '%' . $search . '%';
+    if ($showCompanyName) { $whereParts[] = 'c.company_name LIKE ?'; $params[] = $term; }
+    if ($showCompanyLocation) { $whereParts[] = 'c.city LIKE ?'; $params[] = $term; }
+    if ($showIndustry) { $whereParts[] = 'c.industry LIKE ?'; $params[] = $term; }
+}
 
 $sql = "
     SELECT
-        c.*,
-
-        /* Current + historical clients */
-        (
-            SELECT COUNT(*)
-            FROM clients cl
+        c.id,
+        c.company_name,
+        c.city,
+        c.industry,
+        c.website,
+        " . ($showContacts ? "(
+            SELECT COUNT(*) FROM clients cl
             WHERE cl.company_id = c.id
                OR cl.id IN (
-                   SELECT coc.client_id
-                   FROM client_old_companies coc
-                   WHERE coc.company_id = c.id
+                    SELECT coc.client_id FROM client_old_companies coc
+                    WHERE coc.company_id = c.id
                )
-        ) AS total_contacts,
-
-        /* Total meetings */
-        (
-            SELECT COUNT(*)
-            FROM meetings m
-            WHERE m.company_id = c.id
-        ) AS total_meetings,
-
-        /* Pending follow-ups */
-       (
-    SELECT COUNT(*)
-    FROM follow_ups f
-    INNER JOIN clients cl
-        ON cl.id = f.client_id
-    WHERE (
-        cl.company_id = c.id
-        OR cl.id IN (
-            SELECT coc.client_id
-            FROM client_old_companies coc
-            WHERE coc.company_id = c.id
-        )
-    )
-    AND f.status = 'Pending'
-) AS pending_followups
-
+        )" : "0") . " AS total_contacts,
+        " . ($showPending ? "(
+            SELECT COUNT(*) FROM follow_ups f
+            INNER JOIN clients cl ON cl.id = f.client_id
+            WHERE (cl.company_id = c.id OR cl.id IN (
+                SELECT coc.client_id FROM client_old_companies coc
+                WHERE coc.company_id = c.id
+            )) AND f.status = 'Pending'
+        )" : "0") . " AS pending_followups
     FROM companies c
 ";
-
-$params = [];
-
-if ($search !== '') {
-    $sql .= "
-        WHERE c.company_name LIKE ?
-           OR c.city LIKE ?
-           OR c.industry LIKE ?
-    ";
-
-    $term = '%' . $search . '%';
-    $params = [$term, $term, $term];
+if (!$hasAnyCompanyVisibility) {
+    $sql .= " WHERE 1 = 0";
+} elseif ($search !== '') {
+    if ($whereParts) {
+        $sql .= " WHERE (" . implode(' OR ', $whereParts) . ")";
+    } else {
+        // No searchable fields are enabled for this Trainee.
+        $sql .= " WHERE 1 = 0";
+    }
 }
-
-$sql .= " ORDER BY c.company_name ASC";
-
+$sql .= " ORDER BY " . ($showCompanyName ? "c.company_name" : "c.id") . " ASC";
 $companies = fetch_all($sql, $params);
 
 include __DIR__ . '/../includes/header.php';
@@ -91,12 +82,14 @@ include __DIR__ . '/../includes/sidebar.php';
                 <p>Manage all companies in one place.</p>
             </div>
 
+            <?php if (($_SESSION['user']['role'] ?? '') !== 'Trainee'): ?>
             <div>
                 <a href="<?= BASE_URL ?>modules/company_create.php" class="btn btn-primary">
                     <i class="fa fa-plus"></i>
                     Add Company
                 </a>
             </div>
+            <?php endif; ?>
         </div>
 
         <!-- Search -->
@@ -127,11 +120,11 @@ include __DIR__ . '/../includes/sidebar.php';
                 <thead>
                     <tr>
                         <th width="60">#</th>
-                        <th>Company</th>
-                        <th>City</th>
-                        <th>Industry</th>
-                        <th align="center">Contacts</th>
-                        <th align="center">Pending</th>
+                        <?php if ($showCompanyName): ?><th>Company</th><?php endif; ?>
+                        <?php if ($showCompanyLocation): ?><th>City</th><?php endif; ?>
+                        <?php if ($showIndustry): ?><th>Industry</th><?php endif; ?>
+                        <?php if ($showContacts): ?><th align="center">Contacts</th><?php endif; ?>
+                        <?php if ($showPending): ?><th align="center">Pending</th><?php endif; ?>
                         <th width="180">Action</th>
                     </tr>
                 </thead>
@@ -140,7 +133,7 @@ include __DIR__ . '/../includes/sidebar.php';
 
                     <?php if (empty($companies)): ?>
                         <tr>
-                            <td colspan="7" align="center">
+                            <td colspan="<?= 2 + (int)$showCompanyName + (int)$showCompanyLocation + (int)$showIndustry + (int)$showContacts + (int)$showPending ?>" align="center">
                                 No Company Found
                             </td>
                         </tr>
@@ -153,37 +146,23 @@ include __DIR__ . '/../includes/sidebar.php';
 
                                 <td><?= $i++ ?></td>
 
+                                <?php if ($showCompanyName): ?>
                                 <td>
-                                    <strong>
-                                        <?= esc($row['company_name'] ?? '') ?>
-                                    </strong>
-                                    <br>
-                                    <small>
-                                        <?= esc($row['website'] ?? '') ?>
-                                    </small>
+                                    <strong><?= esc($row['company_name'] ?? '') ?></strong>
+                                    <?php if ($showWebsite && !empty($row['website'])): ?><br><small><?= esc($row['website']) ?></small><?php endif; ?>
                                 </td>
+                                <?php endif; ?>
 
-                                <td>
-                                    <?= esc($row['city'] ?? '') ?>
-                                </td>
+                                <?php if ($showCompanyLocation): ?><td><?= esc($row['city'] ?? '') ?></td><?php endif; ?>
+                                <?php if ($showIndustry): ?><td><?= esc($row['industry'] ?? '') ?></td><?php endif; ?>
 
-                                <td>
-                                    <?= esc($row['industry'] ?? '') ?>
-                                </td>
+                                <?php if ($showContacts): ?>
+                                <td align="center"><span class="badge success"><?= (int) ($row['total_contacts'] ?? 0) ?></span></td>
+                                <?php endif; ?>
 
-                                <!-- Contacts -->
-                                <td align="center">
-                                    <span class="badge success">
-                                        <?= (int) ($row['total_contacts'] ?? 0) ?>
-                                    </span>
-                                </td>
-
-                                <!-- Pending Follow-ups -->
-                                <td align="center">
-                                    <span class="badge warning">
-                                        <?= (int) ($row['pending_followups'] ?? 0) ?>
-                                    </span>
-                                </td>
+                                <?php if ($showPending): ?>
+                                <td align="center"><span class="badge warning"><?= (int) ($row['pending_followups'] ?? 0) ?></span></td>
+                                <?php endif; ?>
 
                                 <!-- Action -->
                                 <td>

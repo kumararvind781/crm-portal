@@ -8,12 +8,15 @@ $client = fetch_one("
 SELECT
     c.*,
     co.company_name,
-    u.name AS assigned_name
+    u.name AS assigned_name,
+    first_user.name AS first_connected_name
 FROM clients c
 LEFT JOIN companies co
     ON co.id = c.company_id
 LEFT JOIN users u
     ON u.id = c.assigned_to
+LEFT JOIN users first_user
+    ON first_user.id = c.first_connected_by
 WHERE c.id = ?
 ", [$id]);
 
@@ -30,7 +33,7 @@ $oldCompanies = fetch_all("
 
 /* ---------------- FOLLOW UPS ---------------- */
 
-$followups = fetch_all(
+$followups = can_view_field('section_followup_history') ? fetch_all(
 
     "
 SELECT
@@ -53,13 +56,13 @@ ORDER BY f.followup_date DESC
 
     [$id]
 
-);
+) : [];
 
 /*-------------------------------------------------------
 COMMUNICATIONS
 -------------------------------------------------------*/
 
-$communications = fetch_all(
+$communications = can_view_field('section_communication_timeline') ? fetch_all(
 
     "
 
@@ -83,13 +86,13 @@ ORDER BY cm.communication_date DESC
 
     [$id]
 
-);
+) : [];
 
 /*-------------------------------------------------------
 manual Responses
 -------------------------------------------------------*/
 
-$manualResponses = fetch_all("
+$manualResponses = can_view_field('section_manual_response') ? fetch_all("
 SELECT
 mr.*,
 u.name AS created_name
@@ -98,7 +101,7 @@ LEFT JOIN users u
 ON u.id = mr.created_by
 WHERE mr.client_id=?
 ORDER BY mr.created_at DESC
-", [$id]);
+", [$id]) : [];
 
 if (!$client) {
     redirect_path('modules/clients.php');
@@ -113,6 +116,12 @@ if ($firstName == '' && $fullName != '') {
     $firstName = $parts[0] ?? '';
     $lastName = implode(' ', array_slice($parts, 1));
 }
+
+// Display empty or NULL database values consistently.
+$showValue = static function ($value): string {
+    $value = trim((string) ($value ?? ''));
+    return $value !== '' ? esc($value) : '-';
+};
 
 $pageTitle = 'Interaction Details';
 $pageDescription = 'View full Interaction information';
@@ -135,12 +144,12 @@ include __DIR__ . '/../includes/sidebar.php';
 
                     <div class="d-flex align-items-center">
 
-                        <?php if (!empty($client['photo'])): ?>
+                        <?php if (can_view_field('client_photo') && !empty($client['photo'])): ?>
 
                             <img src="<?= BASE_URL . esc($client['photo']) ?>"
                                 style="width:90px;height:90px;border-radius:50%;object-fit:cover;margin-right:20px;">
 
-                        <?php else: ?>
+                        <?php elseif (can_view_field('client_photo')): ?>
 
                             <div style="
 width:90px;
@@ -165,27 +174,26 @@ margin-right:20px;
                         <div>
 
                             <h3 class="mb-1">
-                                <?= esc(trim($firstName . ' ' . $lastName)) ?>
+                                <?= can_view_field('client_name') ? esc(trim($firstName . ' ' . $lastName)) : 'Client Record' ?>
                             </h3>
 
+                            <?php if (can_view_field('client_designation')): ?>
                             <div class="text-muted">
-
                                 <?= esc($client['designation'] ?? '-') ?>
-
                             </div>
+                            <?php endif; ?>
 
                             <div class="mt-2">
 
-                                <span class="badge bg-success">
-                                    <?= esc($client['status'] ?? '-') ?>
-                                </span>
-
-                                <span class="badge bg-secondary">
-
-                                    Assigned :
-                                    <?= esc($client['assigned_name'] ?? '-') ?>
-
-                                </span>
+                                <?php if (can_view_field('client_status')): ?>
+                                <span class="badge bg-success"><?= esc($client['status'] ?? '-') ?></span>
+                                <?php endif; ?>
+                                <?php if (can_view_field('client_assigned')): ?>
+                                <span class="badge bg-secondary">Assigned: <?= esc($client['assigned_name'] ?? '-') ?></span>
+                                <?php endif; ?>
+                                <?php if (can_view_field('client_first_connected')): ?>
+                                <span class="badge bg-info text-dark">First Interaction: <?= esc($client['first_connected_name'] ?? '-') ?></span>
+                                <?php endif; ?>
 
                             </div>
 
@@ -201,13 +209,10 @@ margin-right:20px;
 
                         </a>
 
+                        <?php if (($_SESSION['user']['role'] ?? '') !== 'Trainee'): ?>
                         <a href="<?= BASE_URL ?>modules/client_create.php?edit=<?= $client['id'] ?>"
-                            class="btn btn-primary">
-
-                            Edit Interaction
-                        
-
-                        </a>
+                            class="btn btn-primary">Edit Interaction</a>
+                        <?php endif; ?>
 
                     </div>
 
@@ -221,9 +226,7 @@ margin-right:20px;
 
             <!-- Client Information -->
             <div class="col-lg-8">
-
                 <div class="card shadow-sm h-100">
-
                     <div class="card-header bg-white">
                         <h5 class="mb-0">
                             <i class="fas fa-user me-2 text-primary"></i>
@@ -232,187 +235,172 @@ margin-right:20px;
                     </div>
 
                     <div class="card-body">
-
                         <div class="row g-4">
-
+                            <?php if (can_view_field('client_name')): ?>
                             <div class="col-md-6">
                                 <label class="text-muted small">Salutation</label>
-                                <h6><?= esc($client['salutation'] ?? '-') ?></h6>
+                                <h6><?= $showValue($client['salutation'] ?? '') ?></h6>
                             </div>
-
+                            <div class="col-md-6">
+                                <label class="text-muted small">First Name</label>
+                                <h6><?= $showValue($client['first_name'] ?? $firstName) ?></h6>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="text-muted small">Last Name</label>
+                                <h6><?= $showValue($client['last_name'] ?? $lastName) ?></h6>
+                            </div>
+                            <?php endif; ?>
+                            <?php if (can_view_field('client_designation')): ?>
                             <div class="col-md-6">
                                 <label class="text-muted small">Designation</label>
-                                <h6><?= esc($client['designation'] ?? '-') ?></h6>
+                                <h6><?= $showValue($client['designation'] ?? '') ?></h6>
                             </div>
-
+                            <?php endif; ?>
+                            <?php if (can_view_field('client_company')): ?>
                             <div class="col-md-6">
-                                <label class="text-muted small">Company</label>
-                                <h6><?= esc($client['company_name'] ?? '-') ?></h6>
+                                <label class="text-muted small">Company Name</label>
+                                <h6><?= $showValue($client['company_name'] ?? '') ?></h6>
                             </div>
-
+                            <?php endif; ?>
+                            <?php if (can_view_field('client_assigned')): ?>
                             <div class="col-md-6">
-                                <label class="text-muted small">Assigned To</label>
-                                <h6><?= esc($client['assigned_name'] ?? '-') ?></h6>
+                                <label class="text-muted small">Assigned User</label>
+                                <h6><?= $showValue($client['assigned_name'] ?? '') ?></h6>
                             </div>
-
+                            <?php endif; ?>
+                            <?php if (can_view_field('client_first_connected')): ?>
                             <div class="col-md-6">
-                                <label class="text-muted small">Email</label>
+                                <label class="text-muted small">First Connected By</label>
+                                <h6><?= $showValue($client['first_connected_name'] ?? '') ?></h6>
+                            </div>
+                            <?php endif; ?>
+
+                            <?php if (can_view_field('client_personal_email')): ?>
+                            <div class="col-md-6">
+                                <label class="text-muted small">Personal Email ID</label>
                                 <h6>
-                                    <a href="mailto:<?= esc($client['email_id']) ?>">
-                                        <?= esc($client['email_id'] ?? '-') ?>
-                                    </a>
+                                    <?php if (!empty($client['email_id'])): ?>
+                                        <a href="mailto:<?= esc($client['email_id']) ?>"><?= esc($client['email_id']) ?></a>
+                                    <?php else: ?>-<?php endif; ?>
                                 </h6>
                             </div>
-
+                            <?php endif; ?>
+                            <?php if (can_view_field('client_business_email')): ?>
                             <div class="col-md-6">
-                                <label class="text-muted small">Mobile</label>
-                                <h6>
-                                    <a href="tel:<?= esc($client['phone_number']) ?>">
-                                        <?= esc($client['phone_number'] ?? '-') ?>
-                                    </a>
-                                </h6>
-                            </div>
-
-                            <div class="col-md-6">
-                                <label class="text-muted small">WhatsApp</label>
-                                <h6>
-                                    <a href="https://wa.me/<?= preg_replace('/[^0-9]/', '', $client['whatsapp_number'] ?? '') ?>"
-                                        target="_blank">
-                                        <?= esc($client['whatsapp_number'] ?? '-') ?>
-                                    </a>
-                                </h6>
-                            </div>
-
-                            <div class="col-md-6">
-                                <label class="text-muted small">Status</label>
-
-                                <h6>
-                                    <span class="badge <?= status_badge_class($client['status']) ?>">
-                                        <?= esc($client['status']) ?>
-                                    </span>
-                                </h6>
-
-                            </div>
-
-                            <div class="col-md-6">
-                                <label class="text-muted small">Business Email</label>
+                                <label class="text-muted small">Business Email ID</label>
                                 <h6>
                                     <?php if (!empty($client['business_email'])): ?>
-                                        <a href="mailto:<?= esc($client['business_email']) ?>">
-                                            <?= esc($client['business_email']) ?>
-                                        </a>
-                                    <?php else: ?>
-                                        -
-                                    <?php endif; ?>
+                                        <a
+                                            href="mailto:<?= esc($client['business_email']) ?>"><?= esc($client['business_email']) ?></a>
+                                    <?php else: ?>-<?php endif; ?>
                                 </h6>
                             </div>
-
+                            <?php endif; ?>
+                            <?php if (can_view_field('client_mobile')): ?>
                             <div class="col-md-6">
-                                <label class="text-muted small">Business Phone</label>
+                                <label class="text-muted small">Business Mobile Number</label>
+                                <h6>
+                                    <?php if (!empty($client['phone_number'])): ?>
+                                        <a
+                                            href="tel:<?= esc($client['phone_number']) ?>"><?= esc($client['phone_number']) ?></a>
+                                    <?php else: ?>-<?php endif; ?>
+                                </h6>
+                            </div>
+                            <?php endif; ?>
+                            <?php if (can_view_field('client_whatsapp')): ?>
+                            <div class="col-md-6">
+                                <label class="text-muted small">Personal Mobile Number</label>
+                                <h6>
+                                    <?php if (!empty($client['whatsapp_number'])): ?>
+                                        <a href="https://wa.me/<?= preg_replace('/[^0-9]/', '', $client['whatsapp_number']) ?>"
+                                            target="_blank"
+                                            rel="noopener noreferrer"><?= esc($client['whatsapp_number']) ?></a>
+                                    <?php else: ?>-<?php endif; ?>
+                                </h6>
+                            </div>
+                            <?php endif; ?>
+                            <?php if (can_view_field('client_office_phone')): ?>
+                            <div class="col-md-6">
+                                <label class="text-muted small">Office Telephone</label>
                                 <h6>
                                     <?php if (!empty($client['business_phone'])): ?>
-                                        <a href="tel:<?= esc($client['business_phone']) ?>">
-                                            <?= esc($client['business_phone']) ?>
-                                        </a>
-                                    <?php else: ?>
-                                        -
-                                    <?php endif; ?>
+                                        <a
+                                            href="tel:<?= esc($client['business_phone']) ?>"><?= esc($client['business_phone']) ?></a>
+                                    <?php else: ?>-<?php endif; ?>
                                 </h6>
                             </div>
-
-                            <div class="col-md-12">
-                                <label class="text-muted small">Address</label>
-
+                            <?php endif; ?>
+                            <?php if (can_view_field('client_status')): ?>
+                            <div class="col-md-6">
+                                <label class="text-muted small">Status</label>
                                 <h6>
-                                    <?= esc($client['person_address'] ?? '-') ?>
+                                    <span class="badge bg-success">
+                                        <?= $showValue($client['status'] ?? '') ?>
+                                    </span>
                                 </h6>
-
                             </div>
+                            <?php endif; ?>
 
+                            <?php if (can_view_field('client_person_address')): ?>
+                            <div class="col-md-12">
+                                <label class="text-muted small">Person Address</label>
+                                <h6><?= $showValue($client['person_address'] ?? '') ?></h6>
+                            </div>
+                            <?php endif; ?>
+                            <?php if (can_view_field('client_company')): ?>
                             <div class="col-md-6">
                                 <label class="text-muted small">Current Company</label>
-                                <h6>
-                                    <?= esc($client['company_name'] ?? 'No Company / Not Associated') ?>
-                                </h6>
+                                <h6><?= $showValue($client['company_name'] ?? '') ?></h6>
                             </div>
-
+                            <?php endif; ?>
+                            <?php if (can_view_field('client_location')): ?>
                             <div class="col-md-6">
-                                <label class="text-muted small">City</label>
-
-                                <h6>
-                                    <?= esc($client['person_city'] ?? '-') ?>
-                                </h6>
-
+                                <label class="text-muted small">Person City</label>
+                                <h6><?= $showValue($client['person_city'] ?? '') ?></h6>
                             </div>
-
                             <div class="col-md-6">
-                                <label class="text-muted small">Country</label>
-
-                                <h6>
-                                    <?= esc($client['person_country'] ?? '-') ?>
-                                </h6>
-
+                                <label class="text-muted small">Person Country</label>
+                                <h6><?= $showValue($client['person_country'] ?? '') ?></h6>
                             </div>
-
+                            <?php endif; ?>
+                            <?php if (can_view_field('client_company')): ?>
                             <div class="col-md-12">
                                 <label class="text-muted small">Old Companies</label>
-
                                 <div class="mt-2">
                                     <?php if (empty($oldCompanies)): ?>
-
                                         <span class="text-muted">No old company</span>
-
                                     <?php else: ?>
-
                                         <?php foreach ($oldCompanies as $oldCompany): ?>
-
                                             <span class="badge bg-light text-dark border me-2 mb-2 px-3 py-2">
                                                 <?= esc($oldCompany['company_name']) ?>
                                             </span>
-
                                         <?php endforeach; ?>
-
                                     <?php endif; ?>
                                 </div>
                             </div>
-
+                            <?php endif; ?>
+                            <?php if (can_view_field('client_linkedin')): ?>
                             <div class="col-md-12">
-
-                                <label class="text-muted small">
-                                    LinkedIn Profile
-                                </label>
-
+                                <label class="text-muted small">LinkedIn Profile URL</label>
                                 <h6>
-
                                     <?php if (!empty($client['linkedin_profile_url'])): ?>
-
-                                        <a href="<?= esc($client['linkedin_profile_url']) ?>" target="_blank">
-
+                                        <a href="<?= esc($client['linkedin_profile_url']) ?>" target="_blank"
+                                            rel="noopener noreferrer">
                                             <?= esc($client['linkedin_profile_url']) ?>
-
                                         </a>
-
-                                    <?php else: ?>
-
-                                        -
-
-                                    <?php endif; ?>
-
+                                    <?php else: ?>-<?php endif; ?>
                                 </h6>
-
                             </div>
-
+                            <?php endif; ?>
                         </div>
-
                     </div>
-
                 </div>
-
             </div>
 
             <!-- Right Side -->
             <div class="col-lg-4">
 
+                <?php if (can_view_field('client_photo')): ?>
                 <div class="card shadow-sm mb-4">
 
                     <div class="card-header bg-white">
@@ -438,7 +426,9 @@ margin-right:20px;
                     </div>
 
                 </div>
+                <?php endif; ?>
 
+                <?php if (can_view_field('client_visiting_card')): ?>
                 <div class="card shadow-sm">
 
                     <div class="card-header bg-white">
@@ -450,20 +440,30 @@ margin-right:20px;
                     <div class="card-body text-center">
 
                         <?php if (!empty($client['visiting_card'])): ?>
-
-                            <img src="<?= BASE_URL . esc($client['visiting_card']) ?>" class="img-fluid rounded">
-
+                            <?php
+                            $visitingCardPath = (string) $client['visiting_card'];
+                            $visitingCardExtension = strtolower(pathinfo($visitingCardPath, PATHINFO_EXTENSION));
+                            $visitingCardUrl = BASE_URL . ltrim($visitingCardPath, '/');
+                            ?>
+                            <?php if ($visitingCardExtension === 'pdf'): ?>
+                                <a href="<?= esc($visitingCardUrl) ?>" target="_blank" rel="noopener noreferrer"
+                                    class="btn btn-outline-primary">
+                                    <i class="fas fa-file-pdf me-2"></i>View Visiting Card PDF
+                                </a>
+                            <?php else: ?>
+                                <a href="<?= esc($visitingCardUrl) ?>" target="_blank" rel="noopener noreferrer">
+                                    <img src="<?= esc($visitingCardUrl) ?>" class="img-fluid rounded" alt="Visiting Card"
+                                        style="max-height:280px;object-fit:contain;">
+                                </a>
+                            <?php endif; ?>
                         <?php else: ?>
-
-                            <div class="text-muted">
-                                No Visiting Card
-                            </div>
-
+                            <div class="text-muted">No Visiting Card</div>
                         <?php endif; ?>
 
                     </div>
 
                 </div>
+                <?php endif; ?>
 
             </div>
 
@@ -472,6 +472,7 @@ margin-right:20px;
         <div class="row mt-4">
 
             <!-- Referral Information -->
+            <?php if (can_view_field('client_referral')): ?>
             <div class="col-lg-6">
 
                 <div class="card shadow-sm h-100">
@@ -515,7 +516,10 @@ margin-right:20px;
 
             </div>
 
+            <?php endif; ?>
+
             <!-- Event Information -->
+            <?php if (can_view_field('client_events')): ?>
             <div class="col-lg-6">
 
                 <div class="card shadow-sm h-100">
@@ -568,8 +572,10 @@ margin-right:20px;
             </div>
 
         </div>
+            <?php endif; ?>
 
 
+        <?php if (can_view_field('client_notes')): ?>
         <div class="card shadow-sm mt-4">
 
             <div class="card-header bg-white">
@@ -603,9 +609,10 @@ margin-right:20px;
 
             </div>
         </div>
+        <?php endif; ?>
 
         <!-- follow_ups -->
-
+        <?php if (can_view_field('section_followup_history')): ?>
         <div class="card shadow-sm mt-4">
 
             <div class="card-header bg-white">
@@ -704,6 +711,7 @@ margin-right:20px;
             </div>
 
         </div>
+        <?php endif; ?>
 
 
         <!-- COMMUNICATIONS part
@@ -763,6 +771,7 @@ margin-right:20px;
      MANUAL RESPONSE
 ========================================================= -->
 
+        <?php if (can_view_field('section_manual_response')): ?>
         <div class="card shadow-sm mt-4" id="manual-response">
 
             <!-- HEADER -->
@@ -959,7 +968,7 @@ margin-right:20px;
 
                                 </div>
 
-                                
+
                                 <?php if (!empty($row['attachment'])): ?>
 
                                     <?php
@@ -1018,7 +1027,7 @@ margin-right:20px;
                                     </div>
 
                                 <?php endif; ?>
-                                
+
 
 
                                 <!-- CREATED BY -->
@@ -1078,7 +1087,9 @@ margin-right:20px;
 
 
         <!-- manual respons end  -->
+        <?php endif; ?>
 
+        <?php if (can_view_field('section_communication_timeline')): ?>
         <div class="card shadow-sm mt-4">
 
             <div class="card-header">
@@ -1271,6 +1282,7 @@ margin-right:20px;
             </div>
 
         </div>
+        <?php endif; ?>
     </div>
 
 </main>

@@ -5,6 +5,12 @@ require_once __DIR__ . '/../includes/audit.php';
 
 require_login();
 
+// Company create/update is not enabled for Trainee accounts.
+if (($_SESSION['user']['role'] ?? '') === 'Trainee') {
+    http_response_code(403);
+    exit('Access denied: Trainee accounts cannot create or update company records.');
+}
+
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     redirect_path('modules/company_list.php');
     exit;

@@ -1,16 +1,48 @@
-    <?php
-
+<?php
 require_once __DIR__ . '/../includes/functions.php';
 require_login();
 
 $q = trim($_GET['q'] ?? '');
-
 if ($q === '') {
+    http_response_code(400);
     exit('No search value.');
 }
 
-$like = '%' . $q . '%';
+$searchable = [];
+$clientSearchMap = [
+    'client_name' => ['c.name', 'c.first_name', 'c.last_name'],
+    'client_designation' => ['c.designation'],
+    'client_company' => ['co.company_name'],
+    'client_personal_email' => ['c.email_id'],
+    'client_business_email' => ['c.business_email'],
+    'client_mobile' => ['c.phone_number', 'c.whatsapp_number'],
+    'client_office_phone' => ['c.business_phone'],
+    'client_person_address' => ['c.person_address'],
+    'client_location' => ['c.person_city', 'c.person_country'],
+    'client_status' => ['c.status'],
+];
+$companySearchMap = [
+    'company_industry' => ['co.industry'],
+    'company_email' => ['co.company_email'],
+    'company_phone' => ['co.company_phone'],
+    'company_website' => ['co.website'],
+    'company_location' => ['co.city', 'co.state', 'co.country', 'co.pincode'],
+    'company_sales' => ['co.lead_source', 'co.prospect', 'co.status'],
+];
 
+foreach ([$clientSearchMap, $companySearchMap] as $map) {
+    foreach ($map as $permission => $columns) {
+        if (can_view_field($permission)) {
+            foreach ($columns as $column) $searchable[] = $column . ' LIKE ?';
+        }
+    }
+}
+if (!$searchable) {
+    http_response_code(403);
+    exit('No search fields are enabled for this account.');
+}
+
+$like = '%' . $q . '%';
 $results = fetch_all("
     SELECT
         c.*,
@@ -27,139 +59,70 @@ $results = fetch_all("
         co.prospect AS company_prospect,
         co.status AS company_status,
         u.name AS assigned_name
-
     FROM clients c
-
-    LEFT JOIN companies co
-        ON co.id = c.company_id
-
-    LEFT JOIN users u
-        ON u.id = c.assigned_to
-
-    WHERE
-        c.name LIKE ?
-        OR c.first_name LIKE ?
-        OR c.last_name LIKE ?
-        OR c.designation LIKE ?
-        OR c.person_address LIKE ?
-        OR c.person_city LIKE ?
-        OR c.person_country LIKE ?
-        OR c.email_id LIKE ?
-        OR c.business_email LIKE ?
-        OR c.phone_number LIKE ?
-        OR c.business_phone LIKE ?
-        OR c.whatsapp_number LIKE ?
-        OR c.linkedin_profile_url LIKE ?
-        OR c.events_met_at LIKE ?
-        OR c.referred_by_name LIKE ?
-        OR c.referred_by_company LIKE ?
-        OR c.referred_by_number LIKE ?
-        OR c.referred_by_email LIKE ?
-        OR c.status LIKE ?
-        OR c.notes LIKE ?
-
-        OR co.company_name LIKE ?
-        OR co.industry LIKE ?
-        OR co.company_email LIKE ?
-        OR co.company_phone LIKE ?
-        OR co.website LIKE ?
-        OR co.city LIKE ?
-        OR co.state LIKE ?
-        OR co.country LIKE ?
-        OR co.pincode LIKE ?
-        OR co.lead_source LIKE ?
-        OR co.prospect LIKE ?
-        OR co.status LIKE ?
-
+    LEFT JOIN companies co ON co.id = c.company_id
+    LEFT JOIN users u ON u.id = c.assigned_to
+    WHERE (" . implode(' OR ', $searchable) . ")
     ORDER BY c.id DESC
-", array_fill(0, 32, $like));
+", array_fill(0, count($searchable), $like));
 
+$columns = [];
+$add = static function (string $permission, string $heading, string $key) use (&$columns): void {
+    if (can_view_field($permission)) $columns[] = [$heading, $key];
+};
+$add('client_name', 'Client Name', 'name');
+$add('client_name', 'First Name', 'first_name');
+$add('client_name', 'Last Name', 'last_name');
+$add('client_designation', 'Designation', 'designation');
+$add('client_company', 'Company', 'company_name');
+$add('company_industry', 'Company Industry', 'company_industry');
+$add('client_personal_email', 'Email', 'email_id');
+$add('client_business_email', 'Business Email', 'business_email');
+$add('client_mobile', 'Mobile', 'phone_number');
+$add('client_mobile', 'WhatsApp', 'whatsapp_number');
+$add('client_office_phone', 'Business Phone', 'business_phone');
+$add('client_person_address', 'Person Address', 'person_address');
+$add('client_location', 'Person City', 'person_city');
+$add('client_location', 'Person Country', 'person_country');
+$add('company_email', 'Company Email', 'company_email');
+$add('company_phone', 'Company Phone', 'company_phone');
+$add('company_website', 'Company Website', 'company_website');
+$add('company_location', 'Company City', 'company_city');
+$add('company_location', 'Company State', 'company_state');
+$add('company_location', 'Company Country', 'company_country');
+$add('company_location', 'Company Pincode', 'company_pincode');
+$add('client_linkedin', 'LinkedIn', 'linkedin_profile_url');
+$add('client_events', 'Events Met At', 'events_met_at');
+$add('client_referral', 'Referred By', 'referred_by_name');
+$add('client_referral', 'Referred Company', 'referred_by_company');
+$add('client_referral', 'Referred Number', 'referred_by_number');
+$add('client_referral', 'Referred Email', 'referred_by_email');
+$add('client_status', 'Client Status', 'status');
+$add('company_sales', 'Company Lead Source', 'company_lead_source');
+$add('company_sales', 'Company Prospect', 'company_prospect');
+$add('company_sales', 'Company Status', 'company_status');
+$add('client_assigned', 'Assigned To', 'assigned_name');
+$add('client_notes', 'Notes', 'notes');
 
-header('Content-Type: application/vnd.ms-excel');
+header('Content-Type: application/vnd.ms-excel; charset=UTF-8');
 header('Content-Disposition: attachment; filename="client_company_search.xls"');
 header('Pragma: no-cache');
 header('Expires: 0');
 
-echo "<table border='1'>";
-
-echo "<tr>";
-echo "<th>Client Name</th>";
-echo "<th>First Name</th>";
-echo "<th>Last Name</th>";
-echo "<th>Designation</th>";
-echo "<th>Company</th>";
-echo "<th>Company Industry</th>";
-echo "<th>Email</th>";
-echo "<th>Business Email</th>";
-echo "<th>Phone</th>";
-echo "<th>Business Phone</th>";
-echo "<th>WhatsApp</th>";
-echo "<th>Person Address</th>";
-echo "<th>Person City</th>";
-echo "<th>Person Country</th>";
-echo "<th>Company Email</th>";
-echo "<th>Company Phone</th>";
-echo "<th>Company Website</th>";
-echo "<th>Company City</th>";
-echo "<th>Company State</th>";
-echo "<th>Company Country</th>";
-echo "<th>Company Pincode</th>";
-echo "<th>LinkedIn</th>";
-echo "<th>Events Met At</th>";
-echo "<th>Referred By</th>";
-echo "<th>Referred Company</th>";
-echo "<th>Referred Number</th>";
-echo "<th>Referred Email</th>";
-echo "<th>Client Status</th>";
-echo "<th>Company Status</th>";
-echo "<th>Assigned To</th>";
-echo "<th>Notes</th>";
+echo "\xEF\xBB\xBF";
+echo "<table border='1'><tr>";
+foreach ($columns as [$heading, $key]) {
+    echo '<th>' . htmlspecialchars($heading, ENT_QUOTES, 'UTF-8') . '</th>';
+}
 echo "</tr>";
 
 foreach ($results as $row) {
-
     echo "<tr>";
-
-    $values = [
-        $row['name'] ?? '',
-        $row['first_name'] ?? '',
-        $row['last_name'] ?? '',
-        $row['designation'] ?? '',
-        $row['company_name'] ?? '',
-        $row['company_industry'] ?? '',
-        $row['email_id'] ?? '',
-        $row['business_email'] ?? '',
-        $row['phone_number'] ?? '',
-        $row['business_phone'] ?? '',
-        $row['whatsapp_number'] ?? '',
-        $row['person_address'] ?? '',
-        $row['person_city'] ?? '',
-        $row['person_country'] ?? '',
-        $row['company_email'] ?? '',
-        $row['company_phone'] ?? '',
-        $row['company_website'] ?? '',
-        $row['company_city'] ?? '',
-        $row['company_state'] ?? '',
-        $row['company_country'] ?? '',
-        $row['company_pincode'] ?? '',
-        $row['linkedin_profile_url'] ?? '',
-        $row['events_met_at'] ?? '',
-        $row['referred_by_name'] ?? '',
-        $row['referred_by_company'] ?? '',
-        $row['referred_by_number'] ?? '',
-        $row['referred_by_email'] ?? '',
-        $row['status'] ?? '',
-        $row['company_status'] ?? '',
-        $row['assigned_name'] ?? '',
-        $row['notes'] ?? ''
-    ];
-
-    foreach ($values as $value) {
+    foreach ($columns as [$heading, $key]) {
+        $value = $row[$key] ?? '';
         echo '<td>' . htmlspecialchars((string)$value, ENT_QUOTES, 'UTF-8') . '</td>';
     }
-
     echo "</tr>";
 }
-
 echo "</table>";
 exit;

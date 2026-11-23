@@ -133,7 +133,7 @@ $companyResponses = fetch_all("
 
 
 $pageTitle = 'Company Details';
-$pageDescription = $company['company_name'] ?? 'Company Details';
+$pageDescription = can_view_field('company_name') ? ($company['company_name'] ?? 'Company Details') : 'Company Details';
 
 include __DIR__ . '/../includes/header.php';
 include __DIR__ . '/../includes/sidebar.php';
@@ -269,18 +269,23 @@ include __DIR__ . '/../includes/sidebar.php';
                 <div class="d-flex justify-content-between align-items-start flex-wrap gap-3">
                     <div>
                         <div class="hero-sub mb-1">Company Details</div>
-                        <h2 class="fw-bold mb-1"><?php echo esc($company['company_name'] ?? '-'); ?></h2>
+                        <h2 class="fw-bold mb-1"><?php echo can_view_field('company_name') ? esc($company['company_name'] ?? '-') : 'Company Record'; ?></h2>
+                        <?php if (can_view_field('company_industry')): ?>
                         <div class="hero-sub"><?php echo esc($company['industry'] ?? '-'); ?></div>
-                    </div>
+                        </div>
+                            <?php endif; ?>
                     <div class="text-end">
 
-                        <div class="hero-sub">Status</div>
+                        <?php if (can_view_field('company_sales')): ?><div class="hero-sub">Status</div><?php endif; ?>
+                        <?php if (($_SESSION['user']['role'] ?? '') !== 'Trainee'): ?>
                         <a class="btn btn-sm btn-primary"
                             href="<?= BASE_URL ?>modules/company_edit.php?id=<?= $company['id'] ?>">
                             <i class="fa fa-edit"></i> Edit
                         </a>&nbsp;&nbsp;&nbsp;&nbsp;
-                        <span
-                            class="badge bg-light text-dark px-3 py-2 mt-1"><?php echo esc($company['status'] ?? '-'); ?></span>
+                        <?php endif; ?>
+                        <?php if (can_view_field('company_sales')): ?>
+                        <span class="badge bg-light text-dark px-3 py-2 mt-1"><?php echo esc($company['status'] ?? '-'); ?></span>
+                        <?php endif; ?>
 
 
 
@@ -290,7 +295,8 @@ include __DIR__ . '/../includes/sidebar.php';
         </div>
 
         <div class="row g-3 mb-4">
-            <div class="col-6 col-xl-3">
+            <?php if (can_view_field('company_contacts')): ?>
+<div class="col-6 col-xl-3">
                 <div class="card stat-card h-100">
                     <div class="card-body d-flex align-items-center justify-content-between">
                         <div>
@@ -301,7 +307,9 @@ include __DIR__ . '/../includes/sidebar.php';
                     </div>
                 </div>
             </div>
-            <div class="col-6 col-xl-3">
+<?php endif; ?>
+            <?php if (can_view_field('company_meetings')): ?>
+<div class="col-6 col-xl-3">
                 <div class="card stat-card h-100">
                     <div class="card-body d-flex align-items-center justify-content-between">
                         <div>
@@ -312,7 +320,9 @@ include __DIR__ . '/../includes/sidebar.php';
                     </div>
                 </div>
             </div>
-            <div class="col-6 col-xl-3">
+<?php endif; ?>
+            <?php if (can_view_field('company_communications')): ?>
+<div class="col-6 col-xl-3">
                 <div class="card stat-card h-100">
                     <div class="card-body d-flex align-items-center justify-content-between">
                         <div>
@@ -323,7 +333,9 @@ include __DIR__ . '/../includes/sidebar.php';
                     </div>
                 </div>
             </div>
-            <div class="col-6 col-xl-3">
+<?php endif; ?>
+            <?php if (can_view_field('company_followups')): ?>
+<div class="col-6 col-xl-3">
                 <div class="card stat-card h-100">
                     <div class="card-body d-flex align-items-center justify-content-between">
                         <div>
@@ -334,6 +346,7 @@ include __DIR__ . '/../includes/sidebar.php';
                     </div>
                 </div>
             </div>
+<?php endif; ?>
         </div>
 
         <div class="row g-4">
@@ -346,16 +359,21 @@ include __DIR__ . '/../includes/sidebar.php';
                     </div>
                     <div class="card-body">
                         <div class="row g-3">
+                            <?php if (can_view_field('company_name')): ?>
                             <div class="col-md-6">
                                 <div class="muted-box"><span class="info-label">Company Name</span>
                                     <div class="info-value"><?php echo esc($company['company_name'] ?? '-'); ?></div>
                                 </div>
                             </div>
+                            <?php endif; ?>
+                            <?php if (can_view_field('company_industry')): ?>
                             <div class="col-md-6">
                                 <div class="muted-box"><span class="info-label">Industry</span>
                                     <div class="info-value"><?php echo esc($company['industry'] ?? '-'); ?></div>
                                 </div>
                             </div>
+                            <?php endif; ?>
+                            <?php if (can_view_field('company_website')): ?>
                             <div class="col-md-6">
                                 <div class="muted-box"><span class="info-label">Website</span>
                                     <div class="info-value">
@@ -363,16 +381,22 @@ include __DIR__ . '/../includes/sidebar.php';
                                     </div>
                                 </div>
                             </div>
+                            <?php endif; ?>
+                            <?php if (can_view_field('company_email')): ?>
                             <div class="col-md-6">
                                 <div class="muted-box"><span class="info-label">Email</span>
                                     <div class="info-value"><?php echo esc($company['company_email'] ?? '-'); ?></div>
                                 </div>
                             </div>
+                            <?php endif; ?>
+                            <?php if (can_view_field('company_phone')): ?>
                             <div class="col-md-6">
                                 <div class="muted-box"><span class="info-label">Phone</span>
                                     <div class="info-value"><?php echo esc($company['company_phone'] ?? '-'); ?></div>
                                 </div>
                             </div>
+                            <?php endif; ?>
+                            <?php if (can_view_field('company_linkedin')): ?>
                             <div class="col-md-6">
                                 <div class="muted-box"><span class="info-label">LinkedIn</span>
                                     <div class="info-value">
@@ -380,11 +404,15 @@ include __DIR__ . '/../includes/sidebar.php';
                                     </div>
                                 </div>
                             </div>
+                            <?php endif; ?>
+                            <?php if (can_view_field('company_address')): ?>
                             <div class="col-12">
                                 <div class="muted-box"><span class="info-label">Address</span>
                                     <div class="info-value"><?php echo nl2br(esc($company['address'] ?? '-')); ?></div>
                                 </div>
                             </div>
+                            <?php endif; ?>
+                            <?php if (can_view_field('company_systems')): ?>
 
                             <div class="mt-3">
                                 <label class="form-label fw-bold">Systems Used</label>
@@ -404,11 +432,13 @@ include __DIR__ . '/../includes/sidebar.php';
                                     <?php } ?>
                                 </div>
                             </div>
+                            <?php endif; ?>
                         </div>
                     </div>
                 </div>
             </div>
 
+            <?php if (can_view_field('company_sales')): ?>
             <div class="col-lg-4">
                 <div class="card panel-card h-100">
                     <div class="card-header">
@@ -434,26 +464,35 @@ include __DIR__ . '/../includes/sidebar.php';
                                 <th>Assigned To</th>
                                 <td><?php echo esc($company['assigned_to'] ?? '-'); ?></td>
                             </tr>
+                            <?php if (can_view_field('company_location')): ?>
                             <tr>
                                 <th>City</th>
                                 <td><?php echo esc($company['city'] ?? '-'); ?></td>
                             </tr>
+                            <?php endif; ?>
+                            <?php if (can_view_field('company_location')): ?>
                             <tr>
                                 <th>State</th>
                                 <td><?php echo esc($company['state'] ?? '-'); ?></td>
                             </tr>
+                            <?php endif; ?>
+                            <?php if (can_view_field('company_location')): ?>
                             <tr>
                                 <th>Country</th>
                                 <td><?php echo esc($company['country'] ?? '-'); ?></td>
                             </tr>
+                            <?php endif; ?>
+                            <?php if (can_view_field('company_location')): ?>
                             <tr>
                                 <th>Pincode</th>
                                 <td><?php echo esc($company['pincode'] ?? '-'); ?></td>
                             </tr>
+                            <?php endif; ?>
                         </table>
                     </div>
                 </div>
             </div>
+            <?php endif; ?>
         </div>
 
         <!-- <div class="row g-4 mt-0">
@@ -504,6 +543,7 @@ include __DIR__ . '/../includes/sidebar.php';
                 </div>
             </div>
 
+            
             <div class="col-lg-6">
                 <div class="card panel-card h-100">
                     <div class="card-header d-flex justify-content-between align-items-center">
@@ -541,6 +581,7 @@ include __DIR__ . '/../includes/sidebar.php';
         </div> -->
 
         <div class="row g-4 mt-0">
+            <?php if (can_view_field('company_contacts')): ?>
             <div class="col-lg-6">
                 <div class="card panel-card h-100">
                     <div class="card-header d-flex justify-content-between align-items-center">
@@ -557,8 +598,8 @@ include __DIR__ . '/../includes/sidebar.php';
                                             <th>#</th>
                                             <th>Name</th>
                                             <th>Designation</th>
-                                            <th>Email</th>
-                                            <th>Phone</th>
+                                            <?php if (can_view_field('client_personal_email')): ?><th>Email</th><?php endif; ?>
+                                            <?php if (can_view_field('client_mobile')): ?><th>Phone</th><?php endif; ?>
                                             <th>Status</th>
                                         </tr>
                                     </thead>
@@ -566,12 +607,19 @@ include __DIR__ . '/../includes/sidebar.php';
                                         <?php foreach ($contacts as $i => $contact): ?>
                                             <tr>
                                                 <td><?php echo $i + 1; ?></td>
-                                                <td><?php echo esc(trim(($contact['first_name'] ?? '') . ' ' . ($contact['last_name'] ?? '')) ?: '-'); ?>
+                                                <td>
+                                                    <a href="<?= BASE_URL ?>modules/client_view.php?id=<?= (int)($contact['id'] ?? 0) ?>"
+                                                       class="text-decoration-none fw-semibold">
+                                                        <?= esc(trim(($contact['first_name'] ?? '') . ' ' . ($contact['last_name'] ?? '')) ?: '-') ?>
+                                                    </a>
                                                 </td>
                                                 <td><?php echo esc($contact['designation'] ?? '-'); ?></td>
-                                                <td><?php echo !empty($contact['email']) ? '<a href="mailto:' . esc($contact['email']) . '">' . esc($contact['email']) . '</a>' : '-'; ?>
-                                                </td>
-                                                <td><?php echo esc($contact['phone'] ?? '-'); ?></td>
+                                                <?php if (can_view_field('client_personal_email')): ?>
+                                                <td><?php echo !empty($contact['email_id']) ? '<a href="mailto:' . esc($contact['email_id']) . '">' . esc($contact['email_id']) . '</a>' : '-'; ?></td>
+                                                <?php endif; ?>
+                                                <?php if (can_view_field('client_mobile')): ?>
+                                                <td><?php echo esc($contact['phone_number'] ?? '-'); ?></td>
+                                                <?php endif; ?>
                                                 <td>
                                                     <span
                                                         class="badge <?= ($contact['company_status'] ?? '') === 'Active' ? 'success' : 'danger' ?>">
@@ -587,9 +635,10 @@ include __DIR__ . '/../includes/sidebar.php';
                     </div>
                 </div>
             </div>
+            <?php endif; ?>
 
 
-
+            <?php if (can_view_field('company_followups')): ?>
             <div class="col-lg-6">
                 <div class="card panel-card h-100">
                     <div class="card-header">
@@ -630,6 +679,7 @@ include __DIR__ . '/../includes/sidebar.php';
                     </div>
                 </div>
             </div>
+            <?php endif; ?>
         </div>
 
 
@@ -640,6 +690,7 @@ include __DIR__ . '/../includes/sidebar.php';
      COMPANY MANUAL RESPONSES
 =========================== -->
 
+        <?php if (can_view_field('company_communications')): ?>
         <div class="card panel-card mt-4">
 
             <!-- HEADER / CLICK TO OPEN -->
@@ -878,6 +929,7 @@ include __DIR__ . '/../includes/sidebar.php';
         </div>
 
         <!-- add manual response section end   -->
+        <?php endif; ?>
     </div>
 </main>
 <?php include __DIR__ . '/../includes/footer.php'; ?>

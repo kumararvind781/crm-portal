@@ -7,9 +7,14 @@ $pageTitle = 'Add Interaction';
 $pageDescription = 'Create or update a full Interaction profile with Interaction and media details.';
 
 $editId = (int) ($_GET['edit'] ?? 0);
+if ($editId > 0 && (($_SESSION['user']['role'] ?? '') === 'Trainee')) {
+    $_SESSION['error'] = 'Trainee accounts cannot edit existing client records.';
+    redirect_path('modules/clients.php');
+}
+
 $client = $editId ? fetch_one('SELECT * FROM clients WHERE id = ?', [$editId]) : null;
 if ($client)
-    $pageTitle = 'Edit Client';
+    $pageTitle = 'Edit Interaction';
 
 $companies = fetch_all('SELECT id, company_name FROM companies ORDER BY company_name ASC');
 
@@ -73,6 +78,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         trim($_POST['referred_by_email'] ?? ''),
         trim($_POST['status'] ?? 'Active'),
         (int) ($_POST['assigned_to'] ?? 0),
+        !empty($_POST['first_connected_by']) ? (int) $_POST['first_connected_by'] : null,
         trim($_POST['notes'] ?? '')
     ];
 
@@ -134,6 +140,7 @@ if ($id) {
             referred_by_email=?,
             status=?,
             assigned_to=?,
+            first_connected_by=?,
             notes=?
          WHERE id=?',
         $params
@@ -204,11 +211,12 @@ if ($id) {
             referred_by_email,
             status,
             assigned_to,
+            first_connected_by,
             notes,
             created_at
         )
         VALUES
-        (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())',
+        (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())',
         $params
     );
 
@@ -300,6 +308,15 @@ include __DIR__ . '/../includes/sidebar.php';
             gap: .75rem;
             flex-wrap: wrap
         }
+
+        /* International telephone input */
+        .iti {
+            width: 100%;
+        }
+
+        .iti input {
+            width: 100%;
+        }
     </style>
 
     <div class="container-fluid page-wrap px-4 py-4">
@@ -307,7 +324,7 @@ include __DIR__ . '/../includes/sidebar.php';
             <div class="panel-head p-4 p-lg-5 d-flex justify-content-between align-items-start flex-wrap gap-3">
                 <div>
                     <div class="sub mb-1">Interaction Profile</div>
-                    <h2 class="fw-bold mb-1"><?php echo $client ? 'Edit Client' : 'Add New Interaction'; ?></h2>
+                    <h2 class="fw-bold mb-1"><?php echo $client ? 'Edit Interaction' : 'Add New Interaction'; ?></h2>
                     <div class="sub">Create or update a full Interaction profile with contact and media details.</div>
                 </div>
                 <a class="btn btn-light" href="<?php echo BASE_URL; ?>modules/clients.php">Back to Interactions</a>
@@ -375,7 +392,7 @@ include __DIR__ . '/../includes/sidebar.php';
                     </div>
 
                     <div class="col-md-4">
-                        <label class="form-label">Email ID</label>
+                        <label class="form-label">Personal Email ID</label>
                         <input type="email" name="email_id" class="form-control"
                             value="<?php echo esc($client['email_id'] ?? ''); ?>">
                     </div>
@@ -387,19 +404,21 @@ include __DIR__ . '/../includes/sidebar.php';
                     </div>
 
                     <div class="col-md-4">
-                        <label class="form-label">Business Phone Number</label>
-                        <input type="text" name="business_phone" class="form-control"
-                            value="<?php echo esc($client['business_phone'] ?? ''); ?>">
+                        <label class="form-label">Office Telephone</label>
+                        <input type="tel" id="business_phone" name="business_phone" class="form-control"
+                            value="<?php echo esc($client['business_phone'] ?? ''); ?>"
+                            placeholder="Enter office landline number" autocomplete="tel">
+                        <small class="text-muted">Country code follows Person Country. You can change it if required.</small>
                     </div>
 
                     <div class="col-md-4">
-                        <label class="form-label">Phone Number</label>
+                        <label class="form-label">Business Mobile Number</label>
                         <input type="text" name="phone_number" class="form-control"
                             value="<?php echo esc($client['phone_number'] ?? ''); ?>">
                     </div>
 
                     <div class="col-md-4">
-                        <label class="form-label">WhatsApp / Alternate Number</label>
+                        <label class="form-label">Personal Mobile Number</label>
                         <input type="text" name="whatsapp_number" class="form-control"
                             value="<?php echo esc($client['whatsapp_number'] ?? ''); ?>">
                     </div>
@@ -466,13 +485,29 @@ include __DIR__ . '/../includes/sidebar.php';
                     </div>
 
                     <div class="col-md-4">
-                        <label class="form-label">Status</label>
-                        <select name="status" class="form-select">
-                            <?php foreach (['Active', 'Onboarding', 'Hold', 'Inactive'] as $s): ?>
-                                <option value="<?php echo $s; ?>" <?php echo (($client['status'] ?? 'Active') === $s) ? 'selected' : ''; ?>><?php echo $s; ?></option>
-                            <?php endforeach; ?>
-                        </select>
-                    </div>
+    <label class="form-label">Status</label>
+
+    <select name="status" class="form-select" required>
+        <option value="">Select Status</option>
+
+        <?php foreach ([
+            'Onboarded',
+            'Not Interested',
+            'In Discussion',
+            'On Hold',
+            'Stopped',
+            'To Be Followed Up',
+            'Not Responding'
+        ] as $s): ?>
+
+            <option value="<?= htmlspecialchars($s) ?>"
+                <?= (($client['status'] ?? '') === $s) ? 'selected' : '' ?>>
+                <?= htmlspecialchars($s) ?>
+            </option>
+
+        <?php endforeach; ?>
+    </select>
+</div>
 
                     <div class="col-md-4">
                         <label class="form-label">Assigned User</label>
@@ -485,15 +520,33 @@ include __DIR__ . '/../includes/sidebar.php';
                     </div>
 
                     <div class="col-md-4">
-                        <label class="form-label">Notes</label>
-                        <input type="text" name="notes" class="form-control"
-                            value="<?php echo esc($client['notes'] ?? ''); ?>">
+                        <label class="form-label">First Connected By</label>
+                        <select name="first_connected_by" class="form-select">
+                            <option value="">Select User</option>
+                            <?php foreach ($users as $u): ?>
+                                <option value="<?php echo (int) $u['id']; ?>"
+                                    <?php echo ((int) ($client['first_connected_by'] ?? 0) === (int) $u['id']) ? 'selected' : ''; ?>>
+                                    <?php echo esc($u['name']); ?>
+                                </option>
+                            <?php endforeach; ?>
+                        </select>
+                        <small class="text-muted">User who first connected or introduced this client.</small>
                     </div>
+
+                                <div class="col-md-4">
+                    <label class="form-label">Notes</label>
+                    <textarea
+                        name="notes"
+                        class="form-control"
+                        rows="3"
+                        placeholder="Enter notes..."
+                    ><?= esc($client['notes'] ?? '') ?></textarea>
+                </div>
 
                     <div class="col-12">
                         <div class="actions pt-2">
                             <button class="btn btn-primary px-4"
-                                type="submit"><?php echo $client ? 'Update Client' : 'Save Client'; ?></button>
+                                type="submit"><?php echo $client ? 'Update Interaction' : 'Save Interaction'; ?></button>
                             <a class="btn btn-outline-secondary"
                                 href="<?php echo BASE_URL; ?>modules/clients.php">Cancel</a>
                         </div>
@@ -503,4 +556,108 @@ include __DIR__ . '/../includes/sidebar.php';
         </div>
     </div>
 </main>
+
+<!-- International telephone input for Office Telephone -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/intl-tel-input@25.3.1/build/css/intlTelInput.css">
+<script src="https://cdn.jsdelivr.net/npm/intl-tel-input@25.3.1/build/js/intlTelInput.min.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const phoneInput = document.getElementById('business_phone');
+    const countryInput = document.querySelector('[name="person_country"]');
+
+    if (!phoneInput || !window.intlTelInput) return;
+
+    // Keep the database value before the telephone plugin formats the field.
+    const savedPhoneNumber = (phoneInput.value || '').trim();
+
+    const iti = window.intlTelInput(phoneInput, {
+        initialCountry: 'in',
+        separateDialCode: true,
+        nationalMode: true,
+        autoPlaceholder: 'polite',
+        utilsScript: 'https://cdn.jsdelivr.net/npm/intl-tel-input@25.3.1/build/js/utils.js'
+    });
+
+    function findCountryIso(countryName) {
+        const selectedCountry = (countryName || '').trim().toLowerCase();
+        if (!selectedCountry) return '';
+
+        const aliases = {
+            'india': 'in',
+            'usa': 'us',
+            'united states': 'us',
+            'us': 'us',
+            'uk': 'gb',
+            'uae': 'ae',
+            'south korea': 'kr',
+            'russia': 'ru'
+        };
+
+        if (aliases[selectedCountry]) return aliases[selectedCountry];
+
+        const countries = window.intlTelInput.getCountryData();
+        const match = countries.find(function (country) {
+            return country.name.toLowerCase() === selectedCountry;
+        });
+
+        return match ? match.iso2 : '';
+    }
+
+    // First select the country from Person Country.
+    function syncPhoneCountry() {
+        if (!countryInput) return;
+        const iso = findCountryIso(countryInput.value);
+        if (iso) iti.setCountry(iso);
+    }
+
+    syncPhoneCountry();
+
+    // If the database already has an international number (for example +1...),
+    // let the plugin parse it. It will show the country code only once.
+    if (savedPhoneNumber) {
+        iti.setNumber(savedPhoneNumber);
+    }
+
+    if (countryInput) {
+        countryInput.addEventListener('change', syncPhoneCountry);
+        countryInput.addEventListener('blur', syncPhoneCountry);
+    }
+
+    // Save an international number, but do not block landlines just because
+    // the library's numbering metadata does not recognize a valid local format.
+    if (phoneInput.form) {
+        phoneInput.form.addEventListener('submit', function () {
+            const enteredNumber = (phoneInput.value || '').trim();
+            if (!enteredNumber) {
+                phoneInput.value = '';
+                return;
+            }
+
+            let internationalNumber = '';
+            try {
+                internationalNumber = iti.getNumber();
+            } catch (e) {
+                internationalNumber = '';
+            }
+
+            // Fallback for numbers the library cannot validate/format.
+            if (!internationalNumber || internationalNumber.charAt(0) !== '+') {
+                const selectedCountry = iti.getSelectedCountryData() || {};
+                const dialCode = String(selectedCountry.dialCode || '');
+                let digits = enteredNumber.replace(/\D/g, '');
+
+                // Avoid adding the country calling code twice.
+                if (dialCode && digits.indexOf(dialCode) === 0 && digits.length > dialCode.length + 5) {
+                    digits = digits.substring(dialCode.length);
+                }
+
+                internationalNumber = dialCode ? '+' + dialCode + digits : digits;
+            }
+
+            phoneInput.value = internationalNumber;
+        });
+    }
+});
+</script>
+
 <?php include __DIR__ . '/../includes/footer.php'; ?>

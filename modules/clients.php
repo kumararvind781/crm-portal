@@ -5,6 +5,14 @@ require_login();
 
 $pageTitle = 'Interactions';
 $pageDescription = 'View basic Interaction list and open full Interaction details when needed.';
+$showClientPhoto = can_view_field('client_photo');
+$showClientName = can_view_field('client_name');
+$showClientStatus = can_view_field('client_status');
+$showClientAssigned = can_view_field('client_assigned');
+$showClientCompany = can_view_field('client_company');
+$showClientEmail = can_view_field('client_personal_email');
+$showClientMobile = can_view_field('client_mobile');
+
 
 if (isset($_GET['export']) && $_GET['export'] === 'csv') {
 
@@ -25,11 +33,10 @@ if (isset($_GET['export']) && $_GET['export'] === 'csv') {
     $out = fopen('php://output', 'w');
 
     fputcsv($out, [
-        'First Name',
-        'Last Name',
-        'Company',
-        'Email',
-        'Mobile',
+        ...($showClientName ? ['First Name', 'Last Name'] : []),
+        ...($showClientCompany ? ['Company'] : []),
+        ...($showClientEmail ? ['Email'] : []),
+        ...($showClientMobile ? ['Mobile'] : []),
         'Status',
         'Assigned'
     ]);
@@ -47,12 +54,11 @@ if (isset($_GET['export']) && $_GET['export'] === 'csv') {
         }
 
         fputcsv($out,[
-            $firstName,
-            $lastName,
-            $row['company_name'] ?? '',
-            $row['email_id'] ?? '',
-            $row['phone_number'] ?? '',
-            $row['status'] ?? '',
+            ...($showClientName ? [$firstName, $lastName] : []),
+            ...($showClientCompany ? [$row['company_name'] ?? ''] : []),
+            ...($showClientEmail ? [$row['email_id'] ?? ''] : []),
+            ...($showClientMobile ? [$row['phone_number'] ?? ''] : []),
+            ...($showClientStatus ? [$row['status'] ?? ''] : []),
             $row['assigned_name'] ?? ''
         ]);
     }
@@ -129,14 +135,13 @@ Add Interaction
 <thead>
 
 <tr>
-<th>Photo</th>
-<th>First Name</th>
-<th>Last Name</th>
-<th>Company</th>
-<th>Email</th>
-<th>Mobile</th>
-<th>Status</th>
-<th>Assigned</th>
+<?php if ($showClientPhoto): ?><th>Photo</th><?php endif; ?>
+<?php if ($showClientName): ?><th>First Name</th><th>Last Name</th><?php endif; ?>
+<?php if ($showClientCompany): ?><th>Company</th><?php endif; ?>
+<?php if ($showClientEmail): ?><th>Email</th><?php endif; ?>
+<?php if ($showClientMobile): ?><th>Mobile</th><?php endif; ?>
+<?php if ($showClientStatus): ?><th>Status</th><?php endif; ?>
+<?php if ($showClientAssigned): ?><th>Assigned</th><?php endif; ?>
 <th>Action</th>
 </tr>
 
@@ -170,41 +175,25 @@ $id=(int)$row['id'];
 
 <tr>
 
+<?php if ($showClientPhoto): ?>
 <td>
-
 <?php if(!empty($row['photo'])): ?>
-
-<img
-class="table-thumb"
-src="<?=BASE_URL.esc($row['photo'])?>">
-
-<?php else: ?>
-
-N/A
-
+<img class="table-thumb" src="<?=BASE_URL.esc($row['photo'])?>">
+<?php else: ?>N/A<?php endif; ?>
+</td>
 <?php endif; ?>
 
-</td>
+<?php if ($showClientName): ?><td><?=esc($firstName)?></td><td><?=esc($lastName)?></td><?php endif; ?>
 
-<td><?=esc($firstName)?></td>
+<?php if ($showClientCompany): ?><td><?=esc($row['company_name'] ?? '-')?></td><?php endif; ?>
+<?php if ($showClientEmail): ?><td><?=esc($row['email_id'] ?? '-')?></td><?php endif; ?>
+<?php if ($showClientMobile): ?><td><?=esc($row['phone_number'] ?? '-')?></td><?php endif; ?>
 
-<td><?=esc($lastName)?></td>
+<?php if ($showClientStatus): ?>
+<td><span class="badge bg-secondary"><?= esc($row['status'] ?? '-') ?></span></td>
+<?php endif; ?>
 
-<td><?=esc($row['company_name'] ?? '-')?></td>
-
-<td><?=esc($row['email_id'] ?? '-')?></td>
-
-<td><?=esc($row['phone_number'] ?? '-')?></td>
-
-<td>
-
-<span class="badge <?=status_badge_class($row['status'])?>">
-<?=esc($row['status'])?>
-</span>
-
-</td>
-
-<td><?=esc($row['assigned_name'] ?? '-')?></td>
+<?php if ($showClientAssigned): ?><td><?=esc($row['assigned_name'] ?? '-')?></td><?php endif; ?>
 
 <td>
 
@@ -213,10 +202,9 @@ href="<?=BASE_URL?>modules/client_view.php?id=<?=$id?>">
 More
 </a>
 
-<a class="table-action"
-href="<?=BASE_URL?>modules/client_create.php?edit=<?=$id?>">
-Edit
-</a>
+<?php if (($_SESSION['user']['role'] ?? '') !== 'Trainee'): ?>
+<a class="table-action" href="<?=BASE_URL?>modules/client_create.php?edit=<?=$id?>">Edit</a>
+<?php endif; ?>
 
 <?php if(is_admin()): ?>
 

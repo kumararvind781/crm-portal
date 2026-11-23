@@ -449,7 +449,7 @@
             },
             {
                 "Field": "status",
-                "Type": "enum('Active','Pending','Qualified','Inactive')",
+                "Type": "enum('Active','Pending','Qualified','Inactive','Onboarded','Not Interested','In Discussion','On Hold','Stopped','To Be Followed Up','Not Responding')",
                 "Null": "YES",
                 "Default": "Active",
                 "Extra": "",
@@ -457,6 +457,14 @@
             },
             {
                 "Field": "assigned_to",
+                "Type": "int",
+                "Null": "YES",
+                "Default": null,
+                "Extra": "",
+                "Comment": ""
+            },
+            {
+                "Field": "first_connected_by",
                 "Type": "int",
                 "Null": "YES",
                 "Default": null,
@@ -496,9 +504,17 @@
                 "columns": [
                     "assigned_to"
                 ]
+            },
+            {
+                "name": "idx_clients_first_connected_by",
+                "unique": false,
+                "type": "BTREE",
+                "columns": [
+                    "first_connected_by"
+                ]
             }
         ],
-        "create": "CREATE TABLE `clients` (\n  `id` int NOT NULL AUTO_INCREMENT,\n  `name` varchar(120) COLLATE utf8mb4_unicode_ci NOT NULL,\n  `salutation` varchar(20) COLLATE utf8mb4_unicode_ci DEFAULT NULL,\n  `first_name` varchar(100) COLLATE utf8mb4_unicode_ci DEFAULT NULL,\n  `last_name` varchar(100) COLLATE utf8mb4_unicode_ci DEFAULT NULL,\n  `designation` varchar(150) COLLATE utf8mb4_unicode_ci DEFAULT NULL,\n  `person_address` text COLLATE utf8mb4_unicode_ci,\n  `company_id` int DEFAULT NULL,\n  `person_city` varchar(100) COLLATE utf8mb4_unicode_ci DEFAULT NULL,\n  `person_country` varchar(100) COLLATE utf8mb4_unicode_ci DEFAULT NULL,\n  `email_id` varchar(150) COLLATE utf8mb4_unicode_ci DEFAULT NULL,\n  `business_email` varchar(150) COLLATE utf8mb4_unicode_ci DEFAULT NULL,\n  `phone_number` varchar(30) COLLATE utf8mb4_unicode_ci DEFAULT NULL,\n  `business_phone` varchar(30) COLLATE utf8mb4_unicode_ci DEFAULT NULL,\n  `whatsapp_number` varchar(30) COLLATE utf8mb4_unicode_ci DEFAULT NULL,\n  `photo` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,\n  `linkedin_profile_url` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,\n  `visiting_card` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,\n  `events_met_at` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,\n  `referred_by_name` varchar(150) COLLATE utf8mb4_unicode_ci DEFAULT NULL,\n  `referred_by_company` varchar(150) COLLATE utf8mb4_unicode_ci DEFAULT NULL,\n  `referred_by_number` varchar(30) COLLATE utf8mb4_unicode_ci DEFAULT NULL,\n  `referred_by_email` varchar(150) COLLATE utf8mb4_unicode_ci DEFAULT NULL,\n  `company` varchar(150) COLLATE utf8mb4_unicode_ci NOT NULL,\n  `phone` varchar(30) COLLATE utf8mb4_unicode_ci NOT NULL,\n  `email` varchar(120) COLLATE utf8mb4_unicode_ci DEFAULT NULL,\n  `status` enum('Active','Pending','Qualified','Inactive') COLLATE utf8mb4_unicode_ci DEFAULT 'Active',\n  `assigned_to` int DEFAULT NULL,\n  `notes` text COLLATE utf8mb4_unicode_ci,\n  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,\n  PRIMARY KEY (`id`),\n  KEY `fk_client_user` (`assigned_to`)\n) ENGINE=MyISAM AUTO_INCREMENT=15 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci"
+        "create": "CREATE TABLE `clients` (\n  `id` int NOT NULL AUTO_INCREMENT,\n  `name` varchar(120) COLLATE utf8mb4_unicode_ci NOT NULL,\n  `salutation` varchar(20) COLLATE utf8mb4_unicode_ci DEFAULT NULL,\n  `first_name` varchar(100) COLLATE utf8mb4_unicode_ci DEFAULT NULL,\n  `last_name` varchar(100) COLLATE utf8mb4_unicode_ci DEFAULT NULL,\n  `designation` varchar(150) COLLATE utf8mb4_unicode_ci DEFAULT NULL,\n  `person_address` text COLLATE utf8mb4_unicode_ci,\n  `company_id` int DEFAULT NULL,\n  `person_city` varchar(100) COLLATE utf8mb4_unicode_ci DEFAULT NULL,\n  `person_country` varchar(100) COLLATE utf8mb4_unicode_ci DEFAULT NULL,\n  `email_id` varchar(150) COLLATE utf8mb4_unicode_ci DEFAULT NULL,\n  `business_email` varchar(150) COLLATE utf8mb4_unicode_ci DEFAULT NULL,\n  `phone_number` varchar(30) COLLATE utf8mb4_unicode_ci DEFAULT NULL,\n  `business_phone` varchar(30) COLLATE utf8mb4_unicode_ci DEFAULT NULL,\n  `whatsapp_number` varchar(30) COLLATE utf8mb4_unicode_ci DEFAULT NULL,\n  `photo` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,\n  `linkedin_profile_url` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,\n  `visiting_card` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,\n  `events_met_at` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,\n  `referred_by_name` varchar(150) COLLATE utf8mb4_unicode_ci DEFAULT NULL,\n  `referred_by_company` varchar(150) COLLATE utf8mb4_unicode_ci DEFAULT NULL,\n  `referred_by_number` varchar(30) COLLATE utf8mb4_unicode_ci DEFAULT NULL,\n  `referred_by_email` varchar(150) COLLATE utf8mb4_unicode_ci DEFAULT NULL,\n  `company` varchar(150) COLLATE utf8mb4_unicode_ci NOT NULL,\n  `phone` varchar(30) COLLATE utf8mb4_unicode_ci NOT NULL,\n  `email` varchar(120) COLLATE utf8mb4_unicode_ci DEFAULT NULL,\n  `status` enum('Active','Pending','Qualified','Inactive','Onboarded','Not Interested','In Discussion','On Hold','Stopped','To Be Followed Up','Not Responding') COLLATE utf8mb4_unicode_ci DEFAULT 'Active',\n  `assigned_to` int DEFAULT NULL,\n  `first_connected_by` int DEFAULT NULL,\n  `notes` text COLLATE utf8mb4_unicode_ci,\n  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,\n  PRIMARY KEY (`id`),\n  KEY `fk_client_user` (`assigned_to`),\n  KEY `idx_clients_first_connected_by` (`first_connected_by`)\n) ENGINE=MyISAM AUTO_INCREMENT=35 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci"
     },
     "communications": {
         "columns": [
@@ -719,9 +735,9 @@
             },
             {
                 "Field": "prospect",
-                "Type": "enum('Hot','Warm','Cold')",
+                "Type": "enum('High','Medium','Low')",
                 "Null": "YES",
-                "Default": "Warm",
+                "Default": "Medium",
                 "Extra": "",
                 "Comment": ""
             },
@@ -784,7 +800,7 @@
                 ]
             }
         ],
-        "create": "CREATE TABLE `companies` (\n  `id` int NOT NULL AUTO_INCREMENT,\n  `company_name` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,\n  `address` text COLLATE utf8mb4_unicode_ci,\n  `city` varchar(100) COLLATE utf8mb4_unicode_ci DEFAULT NULL,\n  `state` varchar(100) COLLATE utf8mb4_unicode_ci DEFAULT NULL,\n  `country` varchar(100) COLLATE utf8mb4_unicode_ci DEFAULT NULL,\n  `pincode` varchar(20) COLLATE utf8mb4_unicode_ci DEFAULT NULL,\n  `website` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,\n  `company_email` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,\n  `company_phone` varchar(50) COLLATE utf8mb4_unicode_ci DEFAULT NULL,\n  `linkedin` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,\n  `industry` varchar(100) COLLATE utf8mb4_unicode_ci DEFAULT NULL,\n  `systems_used` text COLLATE utf8mb4_unicode_ci,\n  `prospect` enum('Hot','Warm','Cold') COLLATE utf8mb4_unicode_ci DEFAULT 'Warm',\n  `lead_source` varchar(100) COLLATE utf8mb4_unicode_ci DEFAULT NULL,\n  `assigned_to` int DEFAULT NULL,\n  `status` enum('Active','Pending','Inactive') COLLATE utf8mb4_unicode_ci DEFAULT 'Active',\n  `remarks` text COLLATE utf8mb4_unicode_ci,\n  `created_by` int DEFAULT NULL,\n  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,\n  PRIMARY KEY (`id`)\n) ENGINE=MyISAM AUTO_INCREMENT=7 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci"
+        "create": "CREATE TABLE `companies` (\n  `id` int NOT NULL AUTO_INCREMENT,\n  `company_name` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,\n  `address` text COLLATE utf8mb4_unicode_ci,\n  `city` varchar(100) COLLATE utf8mb4_unicode_ci DEFAULT NULL,\n  `state` varchar(100) COLLATE utf8mb4_unicode_ci DEFAULT NULL,\n  `country` varchar(100) COLLATE utf8mb4_unicode_ci DEFAULT NULL,\n  `pincode` varchar(20) COLLATE utf8mb4_unicode_ci DEFAULT NULL,\n  `website` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,\n  `company_email` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,\n  `company_phone` varchar(50) COLLATE utf8mb4_unicode_ci DEFAULT NULL,\n  `linkedin` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,\n  `industry` varchar(100) COLLATE utf8mb4_unicode_ci DEFAULT NULL,\n  `systems_used` text COLLATE utf8mb4_unicode_ci,\n  `prospect` enum('High','Medium','Low') COLLATE utf8mb4_unicode_ci DEFAULT 'Medium',\n  `lead_source` varchar(100) COLLATE utf8mb4_unicode_ci DEFAULT NULL,\n  `assigned_to` int DEFAULT NULL,\n  `status` enum('Active','Pending','Inactive') COLLATE utf8mb4_unicode_ci DEFAULT 'Active',\n  `remarks` text COLLATE utf8mb4_unicode_ci,\n  `created_by` int DEFAULT NULL,\n  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,\n  PRIMARY KEY (`id`)\n) ENGINE=MyISAM AUTO_INCREMENT=25 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci"
     },
     "contacts": {
         "columns": [
@@ -1228,7 +1244,7 @@
                 ]
             }
         ],
-        "create": "CREATE TABLE `follow_ups` (\n  `id` int NOT NULL AUTO_INCREMENT,\n  `client_id` int NOT NULL,\n  `company_id` int DEFAULT NULL,\n  `followup_date` datetime NOT NULL,\n  `status` enum('Pending','Completed','Overdue','Hold') COLLATE utf8mb4_unicode_ci DEFAULT 'Pending',\n  `notes` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,\n  `created_by` int DEFAULT NULL,\n  `assigned_to` int DEFAULT NULL,\n  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,\n  `platform` varchar(50) COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'Call',\n  `reminder_sent_at` datetime DEFAULT NULL,\n  `reminder_1_sent_at` datetime DEFAULT NULL,\n  `reminder_same_day_sent_at` datetime DEFAULT NULL,\n  `reminder_2_sent_at` datetime DEFAULT NULL,\n  `reminder_overdue_sent_at` datetime DEFAULT NULL,\n  `reminder_overdue_last_sent_at` datetime DEFAULT NULL,\n  PRIMARY KEY (`id`),\n  KEY `fk_follow_client` (`client_id`),\n  KEY `fk_follow_user` (`created_by`)\n) ENGINE=MyISAM AUTO_INCREMENT=31 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci"
+        "create": "CREATE TABLE `follow_ups` (\n  `id` int NOT NULL AUTO_INCREMENT,\n  `client_id` int NOT NULL,\n  `company_id` int DEFAULT NULL,\n  `followup_date` datetime NOT NULL,\n  `status` enum('Pending','Completed','Overdue','Hold') COLLATE utf8mb4_unicode_ci DEFAULT 'Pending',\n  `notes` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,\n  `created_by` int DEFAULT NULL,\n  `assigned_to` int DEFAULT NULL,\n  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,\n  `platform` varchar(50) COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'Call',\n  `reminder_sent_at` datetime DEFAULT NULL,\n  `reminder_1_sent_at` datetime DEFAULT NULL,\n  `reminder_same_day_sent_at` datetime DEFAULT NULL,\n  `reminder_2_sent_at` datetime DEFAULT NULL,\n  `reminder_overdue_sent_at` datetime DEFAULT NULL,\n  `reminder_overdue_last_sent_at` datetime DEFAULT NULL,\n  PRIMARY KEY (`id`),\n  KEY `fk_follow_client` (`client_id`),\n  KEY `fk_follow_user` (`created_by`)\n) ENGINE=MyISAM AUTO_INCREMENT=32 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci"
     },
     "followups": {
         "columns": [
@@ -1688,6 +1704,510 @@
         ],
         "create": "CREATE TABLE `meetings` (\n  `id` int NOT NULL AUTO_INCREMENT,\n  `company_id` int NOT NULL,\n  `contact_id` int NOT NULL,\n  `meeting_title` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,\n  `meeting_type` enum('Office','Client Office','Online','Phone','Google Meet','Zoom','Microsoft Teams','Other') COLLATE utf8mb4_unicode_ci DEFAULT 'Office',\n  `meeting_location` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,\n  `meeting_date` datetime NOT NULL,\n  `duration` int DEFAULT NULL,\n  `meeting_status` enum('Scheduled','Pending','Completed','Cancelled','Rescheduled') COLLATE utf8mb4_unicode_ci DEFAULT 'Scheduled',\n  `agenda` text COLLATE utf8mb4_unicode_ci,\n  `discussion` text COLLATE utf8mb4_unicode_ci,\n  `outcome` text COLLATE utf8mb4_unicode_ci,\n  `action_items` text COLLATE utf8mb4_unicode_ci,\n  `attachment` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,\n  `next_followup` datetime DEFAULT NULL,\n  `created_by` int NOT NULL,\n  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,\n  PRIMARY KEY (`id`)\n) ENGINE=MyISAM AUTO_INCREMENT=7 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci"
     },
+    "user_activity_logs": {
+        "columns": [
+            {
+                "Field": "id",
+                "Type": "bigint unsigned",
+                "Null": "NO",
+                "Default": null,
+                "Extra": "auto_increment",
+                "Comment": ""
+            },
+            {
+                "Field": "user_id",
+                "Type": "int",
+                "Null": "YES",
+                "Default": null,
+                "Extra": "",
+                "Comment": ""
+            },
+            {
+                "Field": "login_history_id",
+                "Type": "bigint unsigned",
+                "Null": "YES",
+                "Default": null,
+                "Extra": "",
+                "Comment": ""
+            },
+            {
+                "Field": "event_type",
+                "Type": "varchar(60)",
+                "Null": "NO",
+                "Default": null,
+                "Extra": "",
+                "Comment": ""
+            },
+            {
+                "Field": "module_name",
+                "Type": "varchar(100)",
+                "Null": "YES",
+                "Default": null,
+                "Extra": "",
+                "Comment": ""
+            },
+            {
+                "Field": "action_name",
+                "Type": "varchar(100)",
+                "Null": "YES",
+                "Default": null,
+                "Extra": "",
+                "Comment": ""
+            },
+            {
+                "Field": "record_type",
+                "Type": "varchar(100)",
+                "Null": "YES",
+                "Default": null,
+                "Extra": "",
+                "Comment": ""
+            },
+            {
+                "Field": "record_id",
+                "Type": "varchar(100)",
+                "Null": "YES",
+                "Default": null,
+                "Extra": "",
+                "Comment": ""
+            },
+            {
+                "Field": "description",
+                "Type": "varchar(500)",
+                "Null": "YES",
+                "Default": null,
+                "Extra": "",
+                "Comment": ""
+            },
+            {
+                "Field": "old_values",
+                "Type": "json",
+                "Null": "YES",
+                "Default": null,
+                "Extra": "",
+                "Comment": ""
+            },
+            {
+                "Field": "new_values",
+                "Type": "json",
+                "Null": "YES",
+                "Default": null,
+                "Extra": "",
+                "Comment": ""
+            },
+            {
+                "Field": "metadata",
+                "Type": "json",
+                "Null": "YES",
+                "Default": null,
+                "Extra": "",
+                "Comment": ""
+            },
+            {
+                "Field": "ip_address",
+                "Type": "varchar(45)",
+                "Null": "YES",
+                "Default": null,
+                "Extra": "",
+                "Comment": ""
+            },
+            {
+                "Field": "request_uri",
+                "Type": "varchar(500)",
+                "Null": "YES",
+                "Default": null,
+                "Extra": "",
+                "Comment": ""
+            },
+            {
+                "Field": "created_at",
+                "Type": "datetime",
+                "Null": "NO",
+                "Default": "CURRENT_TIMESTAMP",
+                "Extra": "DEFAULT_GENERATED",
+                "Comment": ""
+            }
+        ],
+        "indexes": [
+            {
+                "name": "PRIMARY",
+                "unique": true,
+                "type": "BTREE",
+                "columns": [
+                    "id"
+                ]
+            },
+            {
+                "name": "idx_activity_user_date",
+                "unique": false,
+                "type": "BTREE",
+                "columns": [
+                    "user_id",
+                    "created_at"
+                ]
+            },
+            {
+                "name": "idx_activity_type",
+                "unique": false,
+                "type": "BTREE",
+                "columns": [
+                    "event_type"
+                ]
+            },
+            {
+                "name": "idx_activity_module",
+                "unique": false,
+                "type": "BTREE",
+                "columns": [
+                    "module_name"
+                ]
+            },
+            {
+                "name": "idx_activity_record",
+                "unique": false,
+                "type": "BTREE",
+                "columns": [
+                    "record_type",
+                    "record_id"
+                ]
+            },
+            {
+                "name": "idx_activity_login",
+                "unique": false,
+                "type": "BTREE",
+                "columns": [
+                    "login_history_id"
+                ]
+            }
+        ],
+        "create": "CREATE TABLE `user_activity_logs` (\n  `id` bigint unsigned NOT NULL AUTO_INCREMENT,\n  `user_id` int DEFAULT NULL,\n  `login_history_id` bigint unsigned DEFAULT NULL,\n  `event_type` varchar(60) NOT NULL,\n  `module_name` varchar(100) DEFAULT NULL,\n  `action_name` varchar(100) DEFAULT NULL,\n  `record_type` varchar(100) DEFAULT NULL,\n  `record_id` varchar(100) DEFAULT NULL,\n  `description` varchar(500) DEFAULT NULL,\n  `old_values` json DEFAULT NULL,\n  `new_values` json DEFAULT NULL,\n  `metadata` json DEFAULT NULL,\n  `ip_address` varchar(45) DEFAULT NULL,\n  `request_uri` varchar(500) DEFAULT NULL,\n  `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,\n  PRIMARY KEY (`id`),\n  KEY `idx_activity_user_date` (`user_id`,`created_at`),\n  KEY `idx_activity_type` (`event_type`),\n  KEY `idx_activity_module` (`module_name`),\n  KEY `idx_activity_record` (`record_type`,`record_id`),\n  KEY `idx_activity_login` (`login_history_id`)\n) ENGINE=InnoDB AUTO_INCREMENT=325 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci"
+    },
+    "user_login_history": {
+        "columns": [
+            {
+                "Field": "id",
+                "Type": "bigint unsigned",
+                "Null": "NO",
+                "Default": null,
+                "Extra": "auto_increment",
+                "Comment": ""
+            },
+            {
+                "Field": "user_id",
+                "Type": "int",
+                "Null": "NO",
+                "Default": null,
+                "Extra": "",
+                "Comment": ""
+            },
+            {
+                "Field": "session_id_hash",
+                "Type": "char(64)",
+                "Null": "YES",
+                "Default": null,
+                "Extra": "",
+                "Comment": ""
+            },
+            {
+                "Field": "login_at",
+                "Type": "datetime",
+                "Null": "NO",
+                "Default": "CURRENT_TIMESTAMP",
+                "Extra": "DEFAULT_GENERATED",
+                "Comment": ""
+            },
+            {
+                "Field": "logout_at",
+                "Type": "datetime",
+                "Null": "YES",
+                "Default": null,
+                "Extra": "",
+                "Comment": ""
+            },
+            {
+                "Field": "last_activity_at",
+                "Type": "datetime",
+                "Null": "YES",
+                "Default": null,
+                "Extra": "",
+                "Comment": ""
+            },
+            {
+                "Field": "ip_address",
+                "Type": "varchar(45)",
+                "Null": "YES",
+                "Default": null,
+                "Extra": "",
+                "Comment": ""
+            },
+            {
+                "Field": "user_agent",
+                "Type": "varchar(500)",
+                "Null": "YES",
+                "Default": null,
+                "Extra": "",
+                "Comment": ""
+            },
+            {
+                "Field": "login_status",
+                "Type": "enum('Success','Failed')",
+                "Null": "NO",
+                "Default": "Success",
+                "Extra": "",
+                "Comment": ""
+            },
+            {
+                "Field": "logout_reason",
+                "Type": "varchar(100)",
+                "Null": "YES",
+                "Default": null,
+                "Extra": "",
+                "Comment": ""
+            }
+        ],
+        "indexes": [
+            {
+                "name": "PRIMARY",
+                "unique": true,
+                "type": "BTREE",
+                "columns": [
+                    "id"
+                ]
+            },
+            {
+                "name": "idx_login_user",
+                "unique": false,
+                "type": "BTREE",
+                "columns": [
+                    "user_id"
+                ]
+            },
+            {
+                "name": "idx_login_date",
+                "unique": false,
+                "type": "BTREE",
+                "columns": [
+                    "login_at"
+                ]
+            },
+            {
+                "name": "idx_login_session",
+                "unique": false,
+                "type": "BTREE",
+                "columns": [
+                    "session_id_hash"
+                ]
+            }
+        ],
+        "create": "CREATE TABLE `user_login_history` (\n  `id` bigint unsigned NOT NULL AUTO_INCREMENT,\n  `user_id` int NOT NULL,\n  `session_id_hash` char(64) DEFAULT NULL,\n  `login_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,\n  `logout_at` datetime DEFAULT NULL,\n  `last_activity_at` datetime DEFAULT NULL,\n  `ip_address` varchar(45) DEFAULT NULL,\n  `user_agent` varchar(500) DEFAULT NULL,\n  `login_status` enum('Success','Failed') NOT NULL DEFAULT 'Success',\n  `logout_reason` varchar(100) DEFAULT NULL,\n  PRIMARY KEY (`id`),\n  KEY `idx_login_user` (`user_id`),\n  KEY `idx_login_date` (`login_at`),\n  KEY `idx_login_session` (`session_id_hash`)\n) ENGINE=InnoDB AUTO_INCREMENT=22 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci"
+    },
+    "user_screenshots": {
+        "columns": [
+            {
+                "Field": "id",
+                "Type": "bigint unsigned",
+                "Null": "NO",
+                "Default": null,
+                "Extra": "auto_increment",
+                "Comment": ""
+            },
+            {
+                "Field": "user_id",
+                "Type": "int",
+                "Null": "NO",
+                "Default": null,
+                "Extra": "",
+                "Comment": ""
+            },
+            {
+                "Field": "login_history_id",
+                "Type": "bigint unsigned",
+                "Null": "YES",
+                "Default": null,
+                "Extra": "",
+                "Comment": ""
+            },
+            {
+                "Field": "file_path",
+                "Type": "varchar(500)",
+                "Null": "NO",
+                "Default": null,
+                "Extra": "",
+                "Comment": ""
+            },
+            {
+                "Field": "file_hash",
+                "Type": "char(64)",
+                "Null": "YES",
+                "Default": null,
+                "Extra": "",
+                "Comment": ""
+            },
+            {
+                "Field": "captured_at",
+                "Type": "datetime",
+                "Null": "NO",
+                "Default": null,
+                "Extra": "",
+                "Comment": ""
+            },
+            {
+                "Field": "source",
+                "Type": "varchar(80)",
+                "Null": "YES",
+                "Default": "Managed Endpoint",
+                "Extra": "",
+                "Comment": ""
+            },
+            {
+                "Field": "consent_notice_version",
+                "Type": "varchar(50)",
+                "Null": "YES",
+                "Default": null,
+                "Extra": "",
+                "Comment": ""
+            },
+            {
+                "Field": "created_at",
+                "Type": "datetime",
+                "Null": "NO",
+                "Default": "CURRENT_TIMESTAMP",
+                "Extra": "DEFAULT_GENERATED",
+                "Comment": ""
+            }
+        ],
+        "indexes": [
+            {
+                "name": "PRIMARY",
+                "unique": true,
+                "type": "BTREE",
+                "columns": [
+                    "id"
+                ]
+            },
+            {
+                "name": "idx_screenshot_user_date",
+                "unique": false,
+                "type": "BTREE",
+                "columns": [
+                    "user_id",
+                    "captured_at"
+                ]
+            },
+            {
+                "name": "idx_screenshot_login",
+                "unique": false,
+                "type": "BTREE",
+                "columns": [
+                    "login_history_id"
+                ]
+            }
+        ],
+        "create": "CREATE TABLE `user_screenshots` (\n  `id` bigint unsigned NOT NULL AUTO_INCREMENT,\n  `user_id` int NOT NULL,\n  `login_history_id` bigint unsigned DEFAULT NULL,\n  `file_path` varchar(500) NOT NULL,\n  `file_hash` char(64) DEFAULT NULL,\n  `captured_at` datetime NOT NULL,\n  `source` varchar(80) DEFAULT 'Managed Endpoint',\n  `consent_notice_version` varchar(50) DEFAULT NULL,\n  `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,\n  PRIMARY KEY (`id`),\n  KEY `idx_screenshot_user_date` (`user_id`,`captured_at`),\n  KEY `idx_screenshot_login` (`login_history_id`)\n) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci"
+    },
+    "user_security_events": {
+        "columns": [
+            {
+                "Field": "id",
+                "Type": "bigint unsigned",
+                "Null": "NO",
+                "Default": null,
+                "Extra": "auto_increment",
+                "Comment": ""
+            },
+            {
+                "Field": "user_id",
+                "Type": "int",
+                "Null": "YES",
+                "Default": null,
+                "Extra": "",
+                "Comment": ""
+            },
+            {
+                "Field": "login_history_id",
+                "Type": "bigint unsigned",
+                "Null": "YES",
+                "Default": null,
+                "Extra": "",
+                "Comment": ""
+            },
+            {
+                "Field": "event_type",
+                "Type": "varchar(80)",
+                "Null": "NO",
+                "Default": null,
+                "Extra": "",
+                "Comment": ""
+            },
+            {
+                "Field": "event_details",
+                "Type": "varchar(500)",
+                "Null": "YES",
+                "Default": null,
+                "Extra": "",
+                "Comment": ""
+            },
+            {
+                "Field": "page_url",
+                "Type": "varchar(500)",
+                "Null": "YES",
+                "Default": null,
+                "Extra": "",
+                "Comment": ""
+            },
+            {
+                "Field": "ip_address",
+                "Type": "varchar(45)",
+                "Null": "YES",
+                "Default": null,
+                "Extra": "",
+                "Comment": ""
+            },
+            {
+                "Field": "created_at",
+                "Type": "datetime",
+                "Null": "NO",
+                "Default": "CURRENT_TIMESTAMP",
+                "Extra": "DEFAULT_GENERATED",
+                "Comment": ""
+            }
+        ],
+        "indexes": [
+            {
+                "name": "PRIMARY",
+                "unique": true,
+                "type": "BTREE",
+                "columns": [
+                    "id"
+                ]
+            },
+            {
+                "name": "idx_security_user_date",
+                "unique": false,
+                "type": "BTREE",
+                "columns": [
+                    "user_id",
+                    "created_at"
+                ]
+            },
+            {
+                "name": "idx_security_type",
+                "unique": false,
+                "type": "BTREE",
+                "columns": [
+                    "event_type"
+                ]
+            },
+            {
+                "name": "idx_security_date",
+                "unique": false,
+                "type": "BTREE",
+                "columns": [
+                    "created_at"
+                ]
+            }
+        ],
+        "create": "CREATE TABLE `user_security_events` (\n  `id` bigint unsigned NOT NULL AUTO_INCREMENT,\n  `user_id` int DEFAULT NULL,\n  `login_history_id` bigint unsigned DEFAULT NULL,\n  `event_type` varchar(80) NOT NULL,\n  `event_details` varchar(500) DEFAULT NULL,\n  `page_url` varchar(500) DEFAULT NULL,\n  `ip_address` varchar(45) DEFAULT NULL,\n  `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,\n  PRIMARY KEY (`id`),\n  KEY `idx_security_user_date` (`user_id`,`created_at`),\n  KEY `idx_security_type` (`event_type`),\n  KEY `idx_security_date` (`created_at`)\n) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci"
+    },
     "users": {
         "columns": [
             {
@@ -1753,6 +2273,22 @@
                 "Default": null,
                 "Extra": "",
                 "Comment": ""
+            },
+            {
+                "Field": "otp_enabled",
+                "Type": "tinyint(1)",
+                "Null": "NO",
+                "Default": "1",
+                "Extra": "",
+                "Comment": ""
+            },
+            {
+                "Field": "field_permissions",
+                "Type": "longtext",
+                "Null": "YES",
+                "Default": null,
+                "Extra": "",
+                "Comment": ""
             }
         ],
         "indexes": [
@@ -1773,6 +2309,6 @@
                 ]
             }
         ],
-        "create": "CREATE TABLE `users` (\n  `id` int NOT NULL AUTO_INCREMENT,\n  `name` varchar(100) COLLATE utf8mb4_unicode_ci NOT NULL,\n  `email` varchar(120) COLLATE utf8mb4_unicode_ci NOT NULL,\n  `password` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,\n  `role` varchar(50) COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'User',\n  `status` enum('Active','Inactive') COLLATE utf8mb4_unicode_ci DEFAULT 'Active',\n  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,\n  `profile_image` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,\n  PRIMARY KEY (`id`),\n  UNIQUE KEY `email` (`email`)\n) ENGINE=MyISAM AUTO_INCREMENT=7 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci"
+        "create": "CREATE TABLE `users` (\n  `id` int NOT NULL AUTO_INCREMENT,\n  `name` varchar(100) COLLATE utf8mb4_unicode_ci NOT NULL,\n  `email` varchar(120) COLLATE utf8mb4_unicode_ci NOT NULL,\n  `password` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,\n  `role` varchar(50) COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'User',\n  `status` enum('Active','Inactive') COLLATE utf8mb4_unicode_ci DEFAULT 'Active',\n  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,\n  `profile_image` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,\n  `otp_enabled` tinyint(1) NOT NULL DEFAULT '1',\n  `field_permissions` longtext COLLATE utf8mb4_unicode_ci,\n  PRIMARY KEY (`id`),\n  UNIQUE KEY `email` (`email`)\n) ENGINE=MyISAM AUTO_INCREMENT=8 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci"
     }
 }

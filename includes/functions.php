@@ -155,3 +155,36 @@ function delete_file_if_exists(?string $path): void {
     $full = __DIR__ . '/../' . ltrim($path, '/');
     if (is_file($full)) @unlink($full);
 }
+
+
+/**
+ * Field-level visibility for trainee accounts.
+ * Existing roles keep their current full-access behaviour.
+ */
+function current_user_field_permissions(): array {
+    static $permissions = null;
+    if ($permissions !== null) return $permissions;
+
+    $permissions = [];
+    $user = $_SESSION['user'] ?? [];
+    if (($user['role'] ?? '') !== 'Trainee' || is_admin()) return $permissions;
+
+    $userId = (int)($user['id'] ?? 0);
+    if ($userId <= 0) return $permissions;
+
+    try {
+        $row = fetch_one('SELECT field_permissions FROM users WHERE id = ?', [$userId]);
+        $decoded = json_decode((string)($row['field_permissions'] ?? ''), true);
+        $permissions = is_array($decoded) ? $decoded : [];
+    } catch (Throwable $e) {
+        // Fail closed until the database migration has been applied.
+        $permissions = [];
+    }
+    return $permissions;
+}
+
+function can_view_field(string $field): bool {
+    $user = $_SESSION['user'] ?? [];
+    if (($user['role'] ?? '') !== 'Trainee' || is_admin()) return true;
+    return in_array($field, current_user_field_permissions(), true);
+}

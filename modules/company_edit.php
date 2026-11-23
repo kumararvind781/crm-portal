@@ -2,6 +2,13 @@
 require_once __DIR__ . '/../includes/functions.php';
 require_login();
 
+// Trainee permissions are view-only; never expose the full company edit form.
+if (($_SESSION['user']['role'] ?? '') === 'Trainee') {
+    $_SESSION['error'] = 'Trainee accounts cannot edit company records.';
+    redirect_path('modules/company_list.php');
+    exit;
+}
+
 
 
 $id = (int) ($_GET['id'] ?? 0);
@@ -213,7 +220,7 @@ include __DIR__ . '/../includes/sidebar.php';
             <div>
                 <label>Prospect Level</label>
                 <select name="prospect" class="form-control">
-                    <?php foreach (['Hot', 'Warm', 'Cold'] as $item): ?>
+                    <?php foreach (['High', 'Medium', 'Low'] as $item): ?>
                         <option value="<?= $item; ?>" <?= (($company['prospect'] ?? '') === $item) ? 'selected' : ''; ?>>
                             <?= $item; ?>
                         </option>
@@ -225,7 +232,7 @@ include __DIR__ . '/../includes/sidebar.php';
                 <label>Lead Source</label>
                 <select name="lead_source" class="form-control">
                     <option value="">Select</option>
-                    <?php foreach (['Reference', 'Website', 'LinkedIn', 'Cold Call', 'Email', 'Exhibition', 'Other'] as $item): ?>
+                    <?php foreach (['Reference', 'Online', 'LinkedIn', 'Cold Call', 'Email', 'Exhibition', 'Other'] as $item): ?>
                         <option value="<?= esc($item); ?>" <?= (($company['lead_source'] ?? '') === $item) ? 'selected' : ''; ?>>
                             <?= esc($item); ?>
                         </option>
