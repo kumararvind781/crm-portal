@@ -436,7 +436,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     <main class="auth-layout">
         <section class="visual-panel" aria-label="Unire CRM overview">
-            <img src="<?= BASE_URL ?>uploads/Logo/Unire-CRM-Illustration.png" alt="CRM dashboard illustration with travel, support and business tools">
+            <img src="../uploads/Logo/Unire-CRM-Illustration.png"
+     alt="CRM dashboard illustration with travel, support and business tools">
             
         </section>
 
