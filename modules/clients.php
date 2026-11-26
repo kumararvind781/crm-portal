@@ -16,16 +16,24 @@ $showClientMobile = can_view_field('client_mobile');
 
 if (isset($_GET['export']) && $_GET['export'] === 'csv') {
 
-    $rows = fetch_all("
-        SELECT
-            c.*,
-            co.company_name,
-            u.name AS assigned_name
-        FROM clients c
-        LEFT JOIN companies co ON co.id = c.company_id
-        LEFT JOIN users u ON u.id = c.assigned_to
-        ORDER BY c.id DESC
-    ");
+    if (can_view_all_records()) {
+        $rows = fetch_all("
+            SELECT c.*, co.company_name, u.name AS assigned_name
+            FROM clients c
+            LEFT JOIN companies co ON co.id = c.company_id
+            LEFT JOIN users u ON u.id = c.assigned_to
+            ORDER BY c.id DESC
+        ");
+    } else {
+        $rows = fetch_all("
+            SELECT c.*, co.company_name, u.name AS assigned_name
+            FROM clients c
+            LEFT JOIN companies co ON co.id = c.company_id
+            LEFT JOIN users u ON u.id = c.assigned_to
+            WHERE c.assigned_to = ?
+            ORDER BY c.id DESC
+        ", [current_user_id()]);
+    }
 
     header('Content-Type: text/csv');
     header('Content-Disposition: attachment; filename=clients-report.csv');
@@ -85,18 +93,24 @@ if(isset($_GET['delete']) && is_admin()){
     redirect_path('modules/clients.php');
 }
 
-$clients = fetch_all("
-SELECT
-    c.*,
-    co.company_name,
-    u.name AS assigned_name
-FROM clients c
-LEFT JOIN companies co
-ON co.id=c.company_id
-LEFT JOIN users u
-ON u.id=c.assigned_to
-ORDER BY c.id DESC
-");
+if (can_view_all_records()) {
+    $clients = fetch_all("
+        SELECT c.*, co.company_name, u.name AS assigned_name
+        FROM clients c
+        LEFT JOIN companies co ON co.id = c.company_id
+        LEFT JOIN users u ON u.id = c.assigned_to
+        ORDER BY c.id DESC
+    ");
+} else {
+    $clients = fetch_all("
+        SELECT c.*, co.company_name, u.name AS assigned_name
+        FROM clients c
+        LEFT JOIN companies co ON co.id = c.company_id
+        LEFT JOIN users u ON u.id = c.assigned_to
+        WHERE c.assigned_to = ?
+        ORDER BY c.id DESC
+    ", [current_user_id()]);
+}
 
 include __DIR__.'/../includes/header.php';
 include __DIR__.'/../includes/sidebar.php';

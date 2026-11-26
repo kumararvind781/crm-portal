@@ -144,6 +144,33 @@ function is_admin(): bool {
     return ($_SESSION['user']['role'] ?? '') === 'Super Admin';
 }
 
+/** Super Admin and Manager have global record visibility. */
+function current_user_id(): int {
+    return (int)($_SESSION['user']['id'] ?? 0);
+}
+
+function can_view_all_records(): bool {
+    $role = (string)($_SESSION['user']['role'] ?? '');
+    return in_array($role, ['Super Admin', 'Manager'], true);
+}
+
+/** Return only a Client currently assigned to this user (unless global role). */
+function require_client_access(int $clientId): ?array {
+    if ($clientId <= 0) {
+        redirect_path('modules/clients.php');
+    }
+
+    $client = can_view_all_records()
+        ? fetch_one('SELECT * FROM clients WHERE id = ?', [$clientId])
+        : fetch_one('SELECT * FROM clients WHERE id = ? AND assigned_to = ?', [$clientId, current_user_id()]);
+
+    if (!$client) {
+        $_SESSION['error'] = 'Client not found or it is no longer assigned to your account.';
+        redirect_path('modules/clients.php');
+    }
+    return $client;
+}
+
 if (is_admin()) {
     // Show Delete button
 }

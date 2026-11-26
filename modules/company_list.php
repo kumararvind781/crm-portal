@@ -16,16 +16,53 @@ $showPending = can_view_field('company_followups');
 $hasAnyCompanyVisibility = $showCompanyName || $showCompanyLocation || $showIndustry
     || $showWebsite || $showContacts || $showPending;
 
-// Build search predicates only from fields this account may view.
-// This avoids leaking hidden values through search-result existence.
+$isGlobalViewer = can_view_all_records();
+$userId = current_user_id();
+
 $whereParts = [];
 $params = [];
+
+// Assignment scope: own company OR a company connected to at least one own Client.
+if (!$isGlobalViewer) {
+    $whereParts[] = "(
+        c.assigned_to = ?
+        OR EXISTS (
+            SELECT 1 FROM clients own_cl
+            WHERE own_cl.assigned_to = ?
+              AND (
+                    own_cl.company_id = c.id
+                    OR own_cl.id IN (
+                        SELECT coc.client_id
+                        FROM client_old_companies coc
+                        WHERE coc.company_id = c.id
+                    )
+              )
+        )
+    )";
+    $params[] = $userId;
+    $params[] = $userId;
+}
+
+// Search only fields this account is permitted to view.
 if ($search !== '') {
     $term = '%' . $search . '%';
-    if ($showCompanyName) { $whereParts[] = 'c.company_name LIKE ?'; $params[] = $term; }
-    if ($showCompanyLocation) { $whereParts[] = 'c.city LIKE ?'; $params[] = $term; }
-    if ($showIndustry) { $whereParts[] = 'c.industry LIKE ?'; $params[] = $term; }
+    $searchParts = [];
+    if ($showCompanyName) { $searchParts[] = 'c.company_name LIKE ?'; $params[] = $term; }
+    if ($showCompanyLocation) { $searchParts[] = 'c.city LIKE ?'; $params[] = $term; }
+    if ($showIndustry) { $searchParts[] = 'c.industry LIKE ?'; $params[] = $term; }
+    if ($searchParts) {
+        $whereParts[] = '(' . implode(' OR ', $searchParts) . ')';
+    } else {
+        $whereParts[] = '1 = 0';
+    }
 }
+
+if (!$hasAnyCompanyVisibility) {
+    $whereParts[] = '1 = 0';
+}
+
+$contactScope = $isGlobalViewer ? '' : ' AND cl.assigned_to = ' . (int)$userId;
+$followupScope = $isGlobalViewer ? '' : ' AND cl.assigned_to = ' . (int)$userId;
 
 $sql = "
     SELECT
@@ -36,11 +73,11 @@ $sql = "
         c.website,
         " . ($showContacts ? "(
             SELECT COUNT(*) FROM clients cl
-            WHERE cl.company_id = c.id
+            WHERE (cl.company_id = c.id
                OR cl.id IN (
                     SELECT coc.client_id FROM client_old_companies coc
                     WHERE coc.company_id = c.id
-               )
+               )) {$contactScope}
         )" : "0") . " AS total_contacts,
         " . ($showPending ? "(
             SELECT COUNT(*) FROM follow_ups f
@@ -48,21 +85,14 @@ $sql = "
             WHERE (cl.company_id = c.id OR cl.id IN (
                 SELECT coc.client_id FROM client_old_companies coc
                 WHERE coc.company_id = c.id
-            )) AND f.status = 'Pending'
+            )) AND f.status = 'Pending' {$followupScope}
         )" : "0") . " AS pending_followups
     FROM companies c
 ";
-if (!$hasAnyCompanyVisibility) {
-    $sql .= " WHERE 1 = 0";
-} elseif ($search !== '') {
-    if ($whereParts) {
-        $sql .= " WHERE (" . implode(' OR ', $whereParts) . ")";
-    } else {
-        // No searchable fields are enabled for this Trainee.
-        $sql .= " WHERE 1 = 0";
-    }
+if ($whereParts) {
+    $sql .= ' WHERE ' . implode(' AND ', $whereParts);
 }
-$sql .= " ORDER BY " . ($showCompanyName ? "c.company_name" : "c.id") . " ASC";
+$sql .= ' ORDER BY ' . ($showCompanyName ? 'c.company_name' : 'c.id') . ' ASC';
 $companies = fetch_all($sql, $params);
 
 include __DIR__ . '/../includes/header.php';

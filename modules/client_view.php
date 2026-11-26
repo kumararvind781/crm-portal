@@ -4,6 +4,9 @@ require_login();
 
 $id = (int) ($_GET['id'] ?? 0);
 
+// Verify current assignment before loading Client details or response history.
+$client = require_client_access($id);
+
 $client = fetch_one("
 SELECT
     c.*,

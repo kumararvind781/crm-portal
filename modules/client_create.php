@@ -7,20 +7,21 @@ $pageTitle = 'Add Interaction';
 $pageDescription = 'Create or update a full Interaction profile with Interaction and media details.';
 
 $editId = (int) ($_GET['edit'] ?? 0);
-if ($editId > 0 && (($_SESSION['user']['role'] ?? '') === 'Trainee')) {
-    $_SESSION['error'] = 'Trainee accounts cannot edit existing client records.';
-    redirect_path('modules/clients.php');
-}
-
-$client = $editId ? fetch_one('SELECT * FROM clients WHERE id = ?', [$editId]) : null;
+$client = $editId ? require_client_access($editId) : null;
 if ($client)
     $pageTitle = 'Edit Interaction';
 
-$companies = fetch_all('SELECT id, company_name FROM companies ORDER BY company_name ASC');
+$companies = can_view_all_records()
+    ? fetch_all('SELECT id, company_name FROM companies ORDER BY company_name ASC')
+    : fetch_all('SELECT id, company_name FROM companies WHERE assigned_to = ? ORDER BY company_name ASC', [current_user_id()]);
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $id = (int) ($_POST['id'] ?? 0);
-    $existing = $id ? fetch_one('SELECT photo, visiting_card FROM clients WHERE id = ?', [$id]) : null;
+    $existing = $id ? require_client_access($id) : null;
+    if ($id && !$existing) {
+        http_response_code(404);
+        exit('Client not found.');
+    }
 
     $photo = $existing['photo'] ?? null;
     $visitingCard = $existing['visiting_card'] ?? null;
@@ -53,6 +54,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $businessEmail = trim($_POST['business_email'] ?? '');
     $businessPhone = trim($_POST['business_phone'] ?? '');
 
+    // Keep the saved status if the edit form submits an empty/unmatched value.
+    $postedStatus = trim($_POST['status'] ?? '');
+    $clientStatus = $postedStatus !== ''
+        ? $postedStatus
+        : trim((string)($existing['status'] ?? 'Active'));
+    if ($clientStatus === '') {
+        $clientStatus = 'Active';
+    }
+
+    $postedAssignedTo = (int)($_POST['assigned_to'] ?? 0);
+    $assignedTo = (!can_view_all_records() && !$id)
+        ? current_user_id()
+        : $postedAssignedTo;
+    if ($assignedTo <= 0) $assignedTo = current_user_id();
+
     $params = [
         $fullName,
         $salutation,
@@ -76,8 +92,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         trim($_POST['referred_by_company'] ?? ''),
         trim($_POST['referred_by_number'] ?? ''),
         trim($_POST['referred_by_email'] ?? ''),
-        trim($_POST['status'] ?? 'Active'),
-        (int) ($_POST['assigned_to'] ?? 0),
+        $clientStatus,
+        $assignedTo,
         !empty($_POST['first_connected_by']) ? (int) $_POST['first_connected_by'] : null,
         trim($_POST['notes'] ?? '')
     ];
@@ -158,16 +174,16 @@ if ($id) {
         $changedFields = [];
 
         foreach ($trackedFields as $field) {
-            if ((string)($oldClient[$field] ?? '') !==
-                (string)($field === 'company_id'
-                    ? ($newCompanyId ?? '')
-                    : ($field === 'name'
-                        ? $fullName
-                        : ($field === 'designation'
-                            ? $designation
-                            : ($field === 'status'
-                                ? trim($_POST['status'] ?? 'Active')
-                                : (int)($_POST['assigned_to'] ?? 0)))))) {
+            $newValue = $field === 'company_id'
+                ? ($newCompanyId ?? '')
+                : ($field === 'name'
+                    ? $fullName
+                    : ($field === 'designation'
+                        ? $designation
+                        : ($field === 'status'
+                            ? $clientStatus
+                            : $assignedTo)));
+            if ((string)($oldClient[$field] ?? '') !== (string)$newValue) {
                 $changedFields[] = $field;
             }
         }
@@ -441,8 +457,12 @@ include __DIR__ . '/../includes/sidebar.php';
                                 accept=".pdf,.jpg,.jpeg,.png,.webp">
                             <?php if (!empty($client['visiting_card'])): ?>
                                 <div class="mt-3 small text-muted">
-                                    <a href="<?php echo BASE_URL . esc($client['visiting_card']); ?>" target="_blank">View
-                                        uploaded card</a>
+                                    <a href="<?php echo BASE_URL . esc($client['visiting_card']); ?>"
+                                       target="_blank" rel="noopener noreferrer">
+                                        <?php echo (strtolower(pathinfo($client['visiting_card'], PATHINFO_EXTENSION)) === 'pdf')
+                                            ? 'Open uploaded PDF in new tab'
+                                            : 'View uploaded card in new tab'; ?>
+                                    </a>
                                 </div>
                             <?php endif; ?>
                         </div>
@@ -490,7 +510,8 @@ include __DIR__ . '/../includes/sidebar.php';
     <select name="status" class="form-select" required>
         <option value="">Select Status</option>
 
-        <?php foreach ([
+        <?php
+        $statusOptions = [
             'Onboarded',
             'Not Interested',
             'In Discussion',
@@ -498,7 +519,13 @@ include __DIR__ . '/../includes/sidebar.php';
             'Stopped',
             'To Be Followed Up',
             'Not Responding'
-        ] as $s): ?>
+        ];
+        $savedStatus = trim((string)($client['status'] ?? ''));
+        if ($savedStatus !== '' && !in_array($savedStatus, $statusOptions, true)) {
+            array_unshift($statusOptions, $savedStatus);
+        }
+        foreach ($statusOptions as $s):
+        ?>
 
             <option value="<?= htmlspecialchars($s) ?>"
                 <?= (($client['status'] ?? '') === $s) ? 'selected' : '' ?>>

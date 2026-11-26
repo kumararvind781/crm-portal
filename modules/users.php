@@ -77,6 +77,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $status = trim($_POST['status'] ?? 'Active');
     $otpEnabled = (int)($_POST['otp_enabled'] ?? 1);
 
+    // Email must be unique. Exclude the current user while editing.
+    $duplicateEmail = fetch_one(
+        'SELECT id FROM users WHERE email = ? AND id != ? LIMIT 1',
+        [$email, $id]
+    );
+    if ($duplicateEmail) {
+        $_SESSION['error'] = 'This email address is already registered. Please use another email or edit the existing user.';
+        redirect_path($id > 0 ? 'modules/users.php?edit=' . $id : 'modules/users.php');
+        exit;
+    }
+
     if ($id > 0) {
 
         if (!empty($_POST['password'])) {

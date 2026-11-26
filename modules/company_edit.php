@@ -18,7 +18,7 @@ if ($id <= 0) {
     exit;
 }
 
-$company = fetch_one('SELECT * FROM companies WHERE id=?', [$id]);
+$company = fetch_one('SELECT * FROM companies WHERE id=? AND (? = 1 OR assigned_to = ?)', [$id, can_view_all_records() ? 1 : 0, current_user_id()]);
 if (!$company) {
     $_SESSION['error'] = 'Company not found.';
     redirect_path('modules/company_list.php');
@@ -157,7 +157,14 @@ include __DIR__ . '/../includes/sidebar.php';
 
             <div>
                 <label>Website</label>
-                <input type="url" name="website" class="form-control" value="<?= esc($company['website'] ?? ''); ?>">
+                <?php
+                $websiteValue = trim((string)($company['website'] ?? ''));
+                if ($websiteValue !== '' && !preg_match('~^https?://~i', $websiteValue)) {
+                    $websiteValue = 'https://' . $websiteValue;
+                }
+                ?>
+                <input type="url" name="website" id="company_website" class="form-control"
+                    placeholder="https://www.example.com" value="<?= esc($websiteValue); ?>">
             </div>
 
             <div>
@@ -280,6 +287,25 @@ include __DIR__ . '/../includes/sidebar.php';
 
 <script>
     document.addEventListener('DOMContentLoaded', function () {
+        // Accept website entries such as www.example.com and normalize before submit.
+        const companyForm = document.querySelector('form.company-form');
+        const websiteInput = document.getElementById('company_website');
+
+        function normalizeWebsite() {
+            if (!websiteInput) return;
+            const value = websiteInput.value.trim();
+            if (value && !/^https?:\/\//i.test(value)) {
+                websiteInput.value = 'https://' + value;
+            }
+        }
+
+        if (websiteInput) {
+            websiteInput.addEventListener('blur', normalizeWebsite);
+        }
+        if (companyForm) {
+            companyForm.addEventListener('submit', normalizeWebsite);
+        }
+
         const systemSelect = document.getElementById('system_select');
         const systemsInput = document.getElementById('systems_used');
         const selectedBox = document.getElementById('selectedSystems');

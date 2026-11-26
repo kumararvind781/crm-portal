@@ -5,83 +5,104 @@ require_login();
 $id = isset($_GET['id']) ? (int) $_GET['id'] : 0;
 if ($id <= 0) {
     $_SESSION['error'] = 'Invalid Company ID.';
-    redirect_path('modules/companylist.php');
+    redirect_path('modules/company_list.php');
     exit;
 }
 
-$company = fetch_one("SELECT * FROM companies WHERE id = ?", [$id]);
+$isGlobalViewer = can_view_all_records();
+$userId = current_user_id();
+
+if ($isGlobalViewer) {
+    $company = fetch_one("SELECT * FROM companies WHERE id = ?", [$id]);
+} else {
+    $company = fetch_one(
+        "SELECT co.*
+         FROM companies co
+         WHERE co.id = ?
+           AND (
+                co.assigned_to = ?
+                OR EXISTS (
+                    SELECT 1 FROM clients own_cl
+                    WHERE own_cl.assigned_to = ?
+                      AND (
+                            own_cl.company_id = co.id
+                            OR own_cl.id IN (
+                                SELECT coc.client_id
+                                FROM client_old_companies coc
+                                WHERE coc.company_id = co.id
+                            )
+                      )
+                )
+           )",
+        [$id, $userId, $userId]
+    );
+}
+
 if (!$company) {
-    $_SESSION['error'] = 'Company not found.';
-    redirect_path('modules/companylist.php');
+    $_SESSION['error'] = 'Company not found or no Client assigned to your account.';
+    redirect_path('modules/company_list.php');
     exit;
 }
 
-$contacts = fetch_all(
+$clientScopeSql = $isGlobalViewer ? '' : ' AND c.assigned_to = ?';
+$clientScopeParams = $isGlobalViewer ? [] : [$userId];
+
+$canSeeContacts = can_view_field('company_contacts');
+$canSeeMeetings = can_view_field('company_meetings');
+$canSeeFollowups = can_view_field('company_followups');
+$canSeeCommunications = can_view_field('company_communications');
+$canSeeManualResponses = can_view_field('section_manual_response');
+
+$contacts = $canSeeContacts ? fetch_all(
     "SELECT
         c.*,
-        CASE
-            WHEN c.company_id = ? THEN 'Active'
-            ELSE 'Left'
-        END AS company_status
+        CASE WHEN c.company_id = ? THEN 'Active' ELSE 'Left' END AS company_status
      FROM clients c
-     WHERE c.company_id = ?
+     WHERE (
+            c.company_id = ?
+            OR c.id IN (
+                SELECT client_id FROM client_old_companies WHERE company_id = ?
+            )
+     )" . $clientScopeSql . "
+     ORDER BY CASE WHEN c.company_id = ? THEN 0 ELSE 1 END,
+              c.first_name ASC, c.last_name ASC",
+    array_merge([$id, $id, $id], $clientScopeParams, [$id])
+) : [];
 
-        OR c.id IN (
-            SELECT client_id
-            FROM client_old_companies
-            WHERE company_id = ?
-        )
-
-     ORDER BY
-        CASE
-            WHEN c.company_id = ? THEN 0
-            ELSE 1
-        END,
-        c.first_name ASC,
-        c.last_name ASC",
-    [$id, $id, $id, $id]
-);
-
-$meetings = fetch_all(
+$meetings = $canSeeMeetings ? fetch_all(
     "SELECT *
      FROM meetings
      WHERE company_id = ?
      ORDER BY meeting_date DESC, id DESC",
     [$id]
-);
+) : [];
 
-$followups = fetch_all(
-    "SELECT
-        f.*,
-        CONCAT(c.first_name,' ',c.last_name) AS client_name,
-        u.name AS created_name
+$followups = $canSeeFollowups ? fetch_all(
+    "SELECT f.*, CONCAT(c.first_name,' ',c.last_name) AS client_name,
+            u.name AS created_name
      FROM follow_ups f
      INNER JOIN clients c ON c.id = f.client_id
      LEFT JOIN users u ON u.id = f.created_by
-     WHERE c.company_id = ?
-
-        OR c.id IN (
-            SELECT client_id
-            FROM client_old_companies
-            WHERE company_id = ?
-        )
-
+     WHERE (
+            c.company_id = ?
+            OR c.id IN (
+                SELECT client_id FROM client_old_companies WHERE company_id = ?
+            )
+     )" . $clientScopeSql . "
      ORDER BY f.followup_date DESC, f.id DESC",
-    [$id, $id]
-);
+    array_merge([$id, $id], $clientScopeParams)
+) : [];
 
-$communications = fetch_all(
-    "SELECT
-        cm.*,
-        CONCAT(c.first_name,' ',c.last_name) AS client_name,
-        u.name AS created_name
+$communications = $canSeeCommunications ? fetch_all(
+    "SELECT cm.*, CONCAT(c.first_name,' ',c.last_name) AS client_name,
+            u.name AS created_name
      FROM communications cm
      INNER JOIN clients c ON c.id = cm.contact_id
      LEFT JOIN users u ON u.id = cm.created_by
-     WHERE cm.company_id = ?
+     WHERE cm.company_id = ?" . ($isGlobalViewer ? '' : ' AND c.assigned_to = ?') . "
      ORDER BY cm.communication_date DESC, cm.id DESC",
-    [$id]
-);
+    $isGlobalViewer ? [$id] : [$id, $userId]
+) : [];
 
 $totalContacts = count($contacts);
 $totalMeetings = count($meetings);
@@ -89,7 +110,7 @@ $totalFollowups = count($followups);
 $totalCommunications = count($communications);
 
 $lastMeeting = $meetings[0] ?? null;
-$upcomingMeeting = fetch_one(
+$upcomingMeeting = ($canSeeMeetings) ? fetch_one(
     "SELECT *
      FROM meetings
      WHERE company_id = ?
@@ -97,40 +118,19 @@ $upcomingMeeting = fetch_one(
      ORDER BY meeting_date ASC, id ASC
      LIMIT 1",
     [$id]
-);
+) : null;
 
-// manual response fetch
-
-$companyResponses = fetch_all("
-    SELECT
-        mr.id,
-        mr.client_id,
-        mr.company_id,
-        mr.communication_by,
-        mr.response,
-        mr.attachment,
-        mr.attachment_name,
-        mr.created_at,
-
-        c.first_name,
-        c.last_name,
-        c.designation,
-
-        u.name AS created_name
-
+$companyResponses = $canSeeManualResponses ? fetch_all("
+    SELECT mr.id, mr.client_id, mr.company_id, mr.communication_by,
+           mr.response, mr.attachment, mr.attachment_name, mr.created_at,
+           c.first_name, c.last_name, c.designation,
+           u.name AS created_name
     FROM client_manual_responses mr
-
-    INNER JOIN clients c
-        ON c.id = mr.client_id
-
-    LEFT JOIN users u
-        ON u.id = mr.created_by
-
-    WHERE mr.company_id = ?
-
+    INNER JOIN clients c ON c.id = mr.client_id
+    LEFT JOIN users u ON u.id = mr.created_by
+    WHERE mr.company_id = ?" . ($isGlobalViewer ? '' : ' AND c.assigned_to = ?') . "
     ORDER BY mr.created_at DESC
-", [$id]);
-
+", $isGlobalViewer ? [$id] : [$id, $userId]) : [];
 
 $pageTitle = 'Company Details';
 $pageDescription = can_view_field('company_name') ? ($company['company_name'] ?? 'Company Details') : 'Company Details';
@@ -690,7 +690,7 @@ include __DIR__ . '/../includes/sidebar.php';
      COMPANY MANUAL RESPONSES
 =========================== -->
 
-        <?php if (can_view_field('company_communications')): ?>
+        <?php if (can_view_field('section_manual_response')): ?>
         <div class="card panel-card mt-4">
 
             <!-- HEADER / CLICK TO OPEN -->

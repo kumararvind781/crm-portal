@@ -2,6 +2,13 @@
 require_once __DIR__ . '/../includes/functions.php';
 require_login();
 
+if (current_user_role() === 'Trainee') {
+    $_SESSION['error'] = 'Trainee accounts cannot create company records.';
+    redirect_path('modules/company_list.php');
+    exit;
+}
+
+
 $pageTitle = "Add Company";
 $pageDescription = "Create a new company.";
 

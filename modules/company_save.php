@@ -31,6 +31,10 @@ $company_phone = trim($_POST['company_phone'] ?? '');
 $prospect      = trim($_POST['prospect'] ?? '');
 $lead_source   = trim($_POST['lead_source'] ?? '');
 $assigned_to   = (int) ($_POST['assigned_to'] ?? 0);
+if (!can_view_all_records() && $id === 0) {
+    $assigned_to = current_user_id();
+}
+if ($assigned_to <= 0) $assigned_to = current_user_id();
 $status        = trim($_POST['status'] ?? 'Active');
 $remarks       = trim($_POST['remarks'] ?? '');
 
@@ -165,10 +169,9 @@ if ($id === 0) {
         [$id]
     );
 
-    if (!$oldCompany) {
-        $_SESSION['error'] = 'Company not found.';
-        redirect_path('modules/company_list.php');
-        exit;
+    if (!$oldCompany || !can_access_assigned_record($oldCompany['assigned_to'] ?? 0)) {
+        http_response_code(404);
+        exit('Company not found.');
     }
 
     // UPDATE COMPANY
